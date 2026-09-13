@@ -1,0 +1,8 @@
+{
+  "name": "videocut-chat",
+  "version": "0.2.1",
+  "mcpServers": {
+    "videocut-chat": {"command": "saycut-tools", "args": ["mcp"]}
+  },
+  "skills": "skills"
+}

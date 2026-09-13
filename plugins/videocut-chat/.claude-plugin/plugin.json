@@ -1,0 +1,6 @@
+{
+  "name": "videocut-chat",
+  "version": "0.2.1",
+  "description": "Compose editable videos locally with videocut.chat fancy captions.",
+  "author": {"name": "videocut.chat"}
+}

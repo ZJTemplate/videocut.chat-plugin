@@ -1,0 +1,21 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "videocut-chat",
+  "version": "0.2.1",
+  "description": "Local video composition, fancy captions and editable native projects.",
+  "author": {"name": "videocut.chat"},
+  "keywords": ["video", "captions", "local-rendering", "mcp"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "videocut.chat",
+        "shortDescription": "Compose editable videos with fancy captions.",
+        "longDescription": "Discover text effects, compose video locally and retain editable SkyMedia projects. Requires a configured Saycut runtime and license.",
+        "developerName": "videocut.chat",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "defaultPrompt": ["Add animated captions to my video and keep it editable."]
+      }
+    }
+  }
+}

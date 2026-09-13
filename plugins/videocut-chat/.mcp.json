@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "videocut-chat": {
+      "command": "saycut-tools",
+      "args": ["mcp"]
+    }
+  }
+}
