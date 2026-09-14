@@ -4,7 +4,7 @@
 
 Animated captions and editable video composition for AI assistants, powered by the licensed `template_generator` engine.
 
-**Version 0.2.3 · Controlled beta · Private installation and bundled-resource rendering verified on macOS.**
+**Version 0.2.5 · Controlled beta · Private installation and bundled-resource rendering verified on macOS.**
 
 This is the public distribution repository for the plugin and Python tool package. It is not a one-click native application, a PyPI publication, or a listing in an official plugin marketplace.
 
@@ -14,6 +14,7 @@ This is the public distribution repository for the plugin and Python tool packag
 - Create and revise video compositions through MCP tools instead of writing native project JSON.
 - Export MP4 videos and editable SkyMedia `.sky` projects with resource bundles.
 - Check progress, cancel running jobs, and safely retry submissions using idempotency keys.
+- Preserve local clip proportions with `fit=contain` (black space) or `fit=cover` (center crop); omitted fit preserves legacy behavior.
 - Connect through local MCP, host-specific configurations, or the cloud gateway with separate personal authorization.
 
 The catalog contains 224 entries. This wheel bundles resources for 211 styles and a fallback font; 13 additional entries require separately supplied resources. Availability is not a guarantee of visual quality for every language or caption length.
@@ -22,10 +23,10 @@ The catalog contains 224 entries. This wheel bundles resources for 211 styles an
 
 | File | Purpose |
 | --- | --- |
-| [Python wheel](releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl) | The `saycut-tools` implementation, MCP server and style resources |
-| [Plugin ZIP](releases/v0.2.3/videocut-chat-plugin-0.2.3.zip) | Portable plugin manifests and the video skill |
-| [SHA256SUMS](releases/v0.2.3/SHA256SUMS) | Checksums for the two archives |
-| [Release notes](releases/v0.2.3/RELEASE_NOTES.md) | Verified behavior and known limitations |
+| [Python wheel](releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl) | The `saycut-tools` implementation, MCP server and style resources |
+| [Plugin ZIP](releases/v0.2.5/videocut-chat-plugin-0.2.5.zip) | Portable plugin manifests and the video skill |
+| [SHA256SUMS](releases/v0.2.5/SHA256SUMS) | Checksums for the two archives |
+| [Release notes](releases/v0.2.5/RELEASE_NOTES.md) | Verified behavior and known limitations |
 
 Installing the plugin ZIP alone does not install the rendering environment. The wheel contains Python code, effect resources and a Source Han Sans fallback font with its license. The installer downloads the SDK Python dependency separately; native binaries and the ASR model are explicit downloads. No account credentials or SDK certificate are bundled.
 
@@ -54,7 +55,7 @@ Replace the example paths with existing directories. These commands target macOS
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl \
+  --wheel releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
   --download-resources --asr --download-model
 ```
@@ -107,7 +108,9 @@ Cloud generation uses the platform's existing GenVideo rates and balance. Automa
 
 The verified legacy cloud workflow exposes one preset and MP4 output. It does not yet provide the full local effect catalog or editable cloud projects. Opening a handoff URL does not establish a working session at `edit.videocut.chat`; the editor bridge is not deployed.
 
-The latest 0.2.3 cloud regression did not finish within the acceptance window and was cancelled after recovering from a polling connection timeout. Earlier successful runs do not establish cloud rendering stability; this remains a controlled beta.
+Three real remote tasks completed after the 0.2.5 deployment in approximately 66, 66 and 96 seconds, covering MCP, REST and idempotent submission. Chinese inputs were about 5 seconds; the English input was about 86 seconds. These used an operator acceptance credential, not a completed personal OAuth/billing acceptance, and do not establish a production SLA. Short clips still take roughly a minute; see the acceptance record for cloud capability limits.
+
+Version 0.2.5 also includes validation and native progress-file hardening. Aspect fitting does not solve long-caption wrapping, missing glyphs or decorative clipping. Normalize rotation metadata and non-square pixels with the skill's FFmpeg procedure before import; this re-encodes video without overwriting the original. See the [0.2.5 acceptance record](docs/ACCEPTANCE-0.2.5.zh-CN.md).
 
 Host-specific adapters are provided. Actual MCP Client and HTTP cloud-render workflows were verified in an isolated n8n 2.38.7 environment using an operator-provisioned credential; 0.2.3 also supplies personal OAuth2 configurations. This does not certify every host's OAuth UI: Claude/Qwen clients, n8n Cloud, AI Agent tool selection and consumer DeepSeek/Doubao chat integrations remain unverified.
 

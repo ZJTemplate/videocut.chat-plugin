@@ -1,6 +1,6 @@
 {
   "name": "videocut-chat",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "mcpServers": {
     "videocut-chat": {"command": "saycut-tools", "args": ["mcp"]}
   },

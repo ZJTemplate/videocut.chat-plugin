@@ -4,7 +4,7 @@
 
 让 AI 助手为视频添加花字字幕、编排画面，并保留可编辑工程。底层使用带许可证校验的 `template_generator` 原生引擎。
 
-**当前版本：0.2.3 · 受控内测 · 已在 macOS 验证私有安装及发行资源的真实合成。**
+**当前版本：0.2.5 · 受控内测 · 已在 macOS 验证私有安装及发行资源的真实合成。**
 
 这是插件和 Python 工具包的公开发行仓库，不是双击即用的原生应用，也不代表已经发布到 PyPI 或上架官方插件市场。
 
@@ -14,6 +14,7 @@
 - 通过 MCP 创建、读取和修改视频工程，无需模型直接编写底层工程 JSON。
 - 导出 MP4、SkyMedia `.sky` 工程及包含引用资源的可编辑 ZIP。
 - 查询进度、取消运行中的任务，通过幂等键避免重试重复创建任务。
+- 本地片段支持 `fit=contain` 留边和 `fit=cover` 居中裁切，保持比例；旧工程默认行为不变。
 - 通过本地 MCP、多宿主配置，或单独授权的个人云端连接接入。
 
 目录包含 224 个条目。新版 wheel 已包含 211 个样式所需的资源和回退字体，另 13 个条目需要另行提供资源。资源可用不等于所有语言、任意字幕长度都能得到理想视觉效果。
@@ -22,10 +23,10 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| [Python wheel](releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl) | `saycut-tools` 工具程序、MCP 服务和样式资源 |
-| [插件 ZIP](releases/v0.2.3/videocut-chat-plugin-0.2.3.zip) | 通用插件配置与视频 Skill |
-| [SHA256SUMS](releases/v0.2.3/SHA256SUMS) | 两个发行包的校验和 |
-| [版本说明](releases/v0.2.3/RELEASE_NOTES.md) | 验证范围和已知限制 |
+| [Python wheel](releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl) | `saycut-tools` 工具程序、MCP 服务和样式资源 |
+| [插件 ZIP](releases/v0.2.5/videocut-chat-plugin-0.2.5.zip) | 通用插件配置与视频 Skill |
+| [SHA256SUMS](releases/v0.2.5/SHA256SUMS) | 两个发行包的校验和 |
+| [版本说明](releases/v0.2.5/RELEASE_NOTES.md) | 验证范围和已知限制 |
 
 **只安装插件 ZIP 不会完成合成环境安装。** wheel 包含 Python 代码、效果资源和带许可文件的思源黑体回退字体。SDK Python 包由安装器另行安装；原生运行时和 ASR 模型通过明确的下载选项获取。不内置账号凭据或 SDK 证书。
 
@@ -54,7 +55,7 @@ python3 scripts/verify_release.py
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl \
+  --wheel releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
   --download-resources --asr --download-model
 ```
@@ -107,7 +108,9 @@ python3 scripts/install_isolated.py \
 
 已验证的旧版云端链路开放一个预设及 MP4 输出，尚未提供本地全部效果或可编辑云端工程。`edit.videocut.chat` 尚未部署编辑器桥接，不能把生成交接链接描述为已经实现在线编辑。
 
-本轮 0.2.3 云端回归没有在验收时限内完成，查询还出现连接超时，恢复原任务后已取消并确认网关终态。此前成功记录不代表当前云端稳定性已达标，仍按受控内测开放。
+0.2.5 部署后的三个真实远端任务均完成，上传至下载约 66、66、96 秒，包括 MCP、REST 和幂等重试；中文素材约 5 秒，英文素材约 86 秒。使用的是运营验收凭据，不等于个人 OAuth、扣费已完成端到端验收，也不足以给出生产 SLA。短视频仍需约一分钟，云端能力边界见下方验收记录。
+
+0.2.5 同时包含非法输入、字幕文件、厂商调用授权和原生进度文件容错修复。画面适配不会自动解决长字幕换行、字体缺字或装饰越界。非方形像素、带旋转信息的视频先按 Skill 的 FFmpeg 步骤标准化再导入；此步骤重新编码，不覆盖原片。详见 [0.2.5 验收](docs/ACCEPTANCE-0.2.5.zh-CN.md)。
 
 本版本提供多宿主适配文件。已在独立的 n8n 2.38.7 环境验证原生 MCP Client 和 HTTP 云端合成工作流，使用的是运营配置的凭据；0.2.3 另提供个人 OAuth2 配置。这不代表每个宿主的 OAuth 界面均已验收：Claude/Qwen 客户端、n8n Cloud、AI Agent 自主选工具或 DeepSeek/豆包消费者聊天入口仍未验收。
 
