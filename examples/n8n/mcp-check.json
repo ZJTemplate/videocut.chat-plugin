@@ -1,0 +1,127 @@
+{
+  "name": "videocut.chat - remote MCP check",
+  "active": false,
+  "nodes": [
+    {
+      "id": "manual",
+      "name": "Manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "MCP Capabilities",
+      "name": "MCP Capabilities",
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "serverTransport": "httpStreamable",
+        "endpointUrl": "https://mcp.zjtemplate.com/mcp",
+        "authentication": "headerAuth",
+        "tool": {
+          "mode": "id",
+          "value": "saycut_capabilities"
+        },
+        "inputMode": "json",
+        "jsonInput": "{}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "MCP Styles",
+      "name": "MCP Styles",
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "serverTransport": "httpStreamable",
+        "endpointUrl": "https://mcp.zjtemplate.com/mcp",
+        "authentication": "headerAuth",
+        "tool": {
+          "mode": "id",
+          "value": "saycut_list_styles"
+        },
+        "inputMode": "json",
+        "jsonInput": "{\"available_only\": true, \"limit\": 5}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "MCP Subtitles",
+      "name": "MCP Subtitles",
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "serverTransport": "httpStreamable",
+        "endpointUrl": "https://mcp.zjtemplate.com/mcp",
+        "authentication": "headerAuth",
+        "tool": {
+          "mode": "id",
+          "value": "saycut_parse_subtitles"
+        },
+        "inputMode": "json",
+        "jsonInput": "{\"format\": \"srt\", \"content\": \"1\\n00:00:00,000 --> 00:00:01,000\\n字幕测试\\n\"}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual": {
+      "main": [
+        [
+          {
+            "node": "MCP Capabilities",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Capabilities": {
+      "main": [
+        [
+          {
+            "node": "MCP Styles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Styles": {
+      "main": [
+        [
+          {
+            "node": "MCP Subtitles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -38,8 +38,11 @@ When using only a wheel rather than the source repository, pass
 ## Cloud Mode
 
 The shared service also supports `https://mcp.zjtemplate.com/mcp` with a per-user videocut.chat token.
-Use the separate generated remote MCP configurations, or `saycut-tools remote-mcp` with
-`SAYCUT_TOKEN` for stdio-only hosts. Cloud mode does not require a local video engine.
+OAuth-capable hosts use the generated remote MCP configurations and the platform consent page.
+For stdio-only hosts, run `saycut-tools --config <config> account login --cloud`, then
+`saycut-tools --config <config> remote-mcp`. Cloud credentials are separate from local SDK
+authorization and refresh automatically. Operator-issued `SAYCUT_TOKEN` remains supported.
+Cloud mode does not require a local video engine.
 Ask before uploading local media. Do not silently fall back from local to cloud rendering.
 
 Discover cloud capabilities before rendering: the deployed legacy GenVideo integration returns

@@ -97,19 +97,30 @@ def install(args):
         env=env,
         check=True,
     )
-    if not config.exists():
-        settings = {
+    settings = existing if config.exists() else {
             "account_enabled": True,
             "data_dir": str(root / "data"),
             "allowed_roots": [str(path) for path in roots],
             "asr_backend": "faster_whisper" if args.asr else "disabled",
             "asr_allow_model_download": False,
         }
-        if runtime:
-            settings["runtime_dir"] = str(runtime)
-        with config.open("x", encoding="utf-8") as stream:
-            os.chmod(config, 0o600)
-            json.dump(settings, stream, indent=2)
+    settings['allowed_roots'] = list(dict.fromkeys([*settings.get('allowed_roots', []), *(str(path) for path in roots)]))
+    if runtime:
+        settings['runtime_dir'] = str(runtime)
+    if args.asr and settings.get('asr_backend', 'disabled') == 'disabled':
+        settings['asr_backend'] = 'faster_whisper'
+    temporary = config.with_suffix('.installing.json')
+    with temporary.open('x', encoding='utf-8') as stream:
+        os.chmod(temporary, 0o600)
+        json.dump(settings, stream, indent=2)
+    os.replace(temporary, config)
+    if getattr(args, 'download_resources', False):
+        subprocess.run([str(python), '-I', '-m', 'saycut_tools.cli', '--config', str(config), 'setup-resources'], env=env, check=True)
+    if getattr(args, 'download_model', False):
+        if not args.asr:
+            raise ValueError('--download-model requires --asr')
+        subprocess.run([str(python), '-I', '-m', 'saycut_tools.cli', '--config', str(config),
+                        'configure-asr', '--backend', 'faster_whisper', '--model', 'small', '--download-model'], env=env, check=True)
     subprocess.run(
         [
             str(python),
@@ -140,12 +151,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--wheel", type=Path, required=True)
     parser.add_argument(
-        "--plugin-source", type=Path, default=Path(__file__).resolve().parents[1] / "plugins/videocut-chat"
+        "--plugin-source", type=Path, default=Path(__file__).resolve().parents[2] / "plugins/videocut-chat"
     )
     parser.add_argument("--root", type=Path, default=Path.home() / ".local/share/saycut-plugin")
     parser.add_argument("--allow-root", type=Path, action="append", required=True)
     parser.add_argument("--runtime-dir", type=Path)
     parser.add_argument("--asr", action="store_true")
+    parser.add_argument('--download-resources', action='store_true', help='Explicitly download native binaries and install bundled effects')
+    parser.add_argument('--download-model', action='store_true', help='Explicitly download the local ASR model (requires --asr)')
     parser.add_argument(
         "--constraint", type=Path, help="Tested pip constraints for this OS and Python version"
     )

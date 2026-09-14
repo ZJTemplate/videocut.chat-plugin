@@ -4,7 +4,7 @@
 
 Animated captions and editable video composition for AI assistants, powered by the licensed `template_generator` engine.
 
-**Version 0.2.2 · Controlled beta · Native rendering verified on a provisioned macOS environment.**
+**Version 0.2.3 · Controlled beta · Private installation and bundled-resource rendering verified on macOS.**
 
 This is the public distribution repository for the plugin and Python tool package. It is not a one-click native application, a PyPI publication, or a listing in an official plugin marketplace.
 
@@ -14,20 +14,20 @@ This is the public distribution repository for the plugin and Python tool packag
 - Create and revise video compositions through MCP tools instead of writing native project JSON.
 - Export MP4 videos and editable SkyMedia `.sky` projects with resource bundles.
 - Check progress, cancel running jobs, and safely retry submissions using idempotency keys.
-- Connect through local MCP, host-specific configurations, or a separately provisioned cloud gateway.
+- Connect through local MCP, host-specific configurations, or the cloud gateway with separate personal authorization.
 
-The catalog contains 224 entries; availability depends on installed resources. The test environment had 211 available entries, not 211 individually verified visual effects.
+The catalog contains 224 entries. This wheel bundles resources for 211 styles and a fallback font; 13 additional entries require separately supplied resources. Availability is not a guarantee of visual quality for every language or caption length.
 
 ## Downloads
 
 | File | Purpose |
 | --- | --- |
-| [Python wheel](releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl) | The `saycut-tools` implementation and MCP server |
-| [Plugin ZIP](releases/v0.2.2/videocut-chat-plugin-0.2.2.zip) | Portable plugin manifests and the video skill |
-| [SHA256SUMS](releases/v0.2.2/SHA256SUMS) | Checksums for the two archives |
-| [Release notes](releases/v0.2.2/RELEASE_NOTES.md) | Verified behavior and known limitations |
+| [Python wheel](releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl) | The `saycut-tools` implementation, MCP server and style resources |
+| [Plugin ZIP](releases/v0.2.3/videocut-chat-plugin-0.2.3.zip) | Portable plugin manifests and the video skill |
+| [SHA256SUMS](releases/v0.2.3/SHA256SUMS) | Checksums for the two archives |
+| [Release notes](releases/v0.2.3/RELEASE_NOTES.md) | Verified behavior and known limitations |
 
-Installing the plugin ZIP alone does not install the rendering environment. The wheel contains Python code; it does not embed the native SDK, native runtime, fonts, effects, a license, or an ASR model.
+Installing the plugin ZIP alone does not install the rendering environment. The wheel contains Python code, effect resources and a Source Han Sans fallback font with its license. The installer downloads the SDK Python dependency separately; native binaries and the ASR model are explicit downloads. No account credentials or SDK certificate are bundled.
 
 ## Local Installation
 
@@ -35,11 +35,10 @@ Installing the plugin ZIP alone does not install the rendering environment. The 
 
 - Python 3.11 or newer, including `pip` and `venv` support.
 - FFmpeg and ffprobe on your PATH.
-- A licensed, OS-compatible TemplateProcess runtime. The runtime directory must contain `skymedia/` and its required native dependencies.
-- Authorized effect resources and fonts, plus a platform account with local-render entitlement.
+- A platform account with local-render entitlement. SDK licensing remains required even with bundled resources.
 - Network access for dependency installation, explicit model downloads, account authorization and license checks.
 
-Obtain missing runtime/resources through your videocut.chat SDK distribution or support contact before attempting native rendering. They are not provided by this repository. Windows/Linux configurations exist but native rendering on those systems has not been accepted in this release.
+The installer can download and verify the pinned native runtime with `--download-resources`. An existing licensed runtime may instead be selected with `--runtime-dir` (its directory must contain `skymedia/`). Windows/Linux configurations exist but native rendering on those systems has not been accepted in this release.
 
 ### 2. Clone And Verify
 
@@ -55,33 +54,24 @@ Replace the example paths with existing directories. These commands target macOS
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl \
+  --wheel releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
-  --runtime-dir "/absolute/path/to/runtime" \
-  --asr
+  --download-resources --asr --download-model
 ```
 
-The installer creates a private environment under `~/.local/share/saycut-plugin`, installs the wheel and `p-template-generator==1.2.17`, and generates machine-specific integration files. `--asr` also installs local speech-recognition dependencies. It does **not** overwrite your global Python packages or an existing `template_generator` installation.
+The installer creates a private environment under `~/.local/share/saycut-plugin`, installs the wheel and `p-template-generator==1.2.17`, and generates machine-specific integration files. `--asr` installs and enables local speech recognition; `--download-model` downloads the model. It does **not** overwrite global Python packages or an existing `template_generator`. Native SDK and cloud/deployment dependencies use separate environments because their Click requirements conflict.
 
 Keep the returned `python`, `config` and `integrations` paths. The next commands use placeholders for those exact returned paths; they are not commands to paste unchanged.
 
-### 4. Prepare Effects And Speech Recognition
+### 4. Check Readiness
 
-Bind a trusted, licensed effect file and fallback font:
+The command above prepares the standard resources. Check prerequisites before rendering:
 
 ```bash
-"<python>" -I -m saycut_tools.cli --config "<config>" catalog bind \
-  --style runtime/ZapMotion \
-  --path "/absolute/path/to/ZapMotion/text.fceffect" \
-  --fallback-font "/absolute/path/to/licensed-font.ttf"
-
-"<python>" -I -m saycut_tools.cli --config "<config>" configure-asr \
-  --backend faster_whisper --model small --download-model
-
 "<python>" -I -m saycut_tools.cli --config "<config>" doctor --check
 ```
 
-The ASR model download is explicit. It does not upload your video. Diagnostics check prerequisites, not the validity of every effect or a successful license-authorized render. A fresh environment without native resources should fail readiness checks.
+Resource and ASR model downloads do not upload your video. To prepare resources later, run `setup-resources`; to prepare the model later, run `configure-asr --backend faster_whisper --model small --download-model` with the same Python/config prefix. Diagnostics check prerequisites, not every effect or a successful license-authorized render.
 
 ### 5. Connect Your Assistant
 
@@ -109,11 +99,17 @@ Do not commit tokens, SDK certificates, private configuration or customer media.
 
 ## Cloud And Compatibility Limits
 
-The cloud MCP endpoint is `https://mcp.zjtemplate.com/mcp`. Access is provisioned separately; do not use a shared administrator token. Public per-user OAuth, billing/refunds and general-availability onboarding are not complete.
+The cloud MCP endpoint is `https://mcp.zjtemplate.com/mcp`. Version 0.2.3 adds OAuth discovery, dynamic registration, PKCE, token rotation/revocation and an explicit platform consent page. Request `account:read video:cloud`; a website login token or an existing local-only grant is not a cloud credential. Do not distribute administrator tokens.
+
+For a stdio-only host, run `"<python>" -I -m saycut_tools.cli --config "<config>" account login --cloud`, approve the connection yourself, then use the generated `remote-mcp` configuration. Its separate personal cloud credential can refresh automatically without replacing the local SDK authorization.
+
+Cloud generation uses the platform's existing GenVideo rates and balance. Automatic ASR reserves against the configured duration ceiling: the current 600-second ceiling at CNY 0.01/second reserves CNY 6, **not a flat final price**. Completion settles reported module usage; excess reservation and failed/cancelled tasks are refunded. The current legacy worker reports `usage={}`, which produces a zero final charge under the existing rule. Full production metering depends on upgrading that worker's usage reporting.
 
 The verified legacy cloud workflow exposes one preset and MP4 output. It does not yet provide the full local effect catalog or editable cloud projects. Opening a handoff URL does not establish a working session at `edit.videocut.chat`; the editor bridge is not deployed.
 
-Host-specific adapters are provided, but Claude/Qwen app sessions, live n8n and consumer DeepSeek/Doubao chat integrations have not been verified by this release. MCP compatibility does not imply official marketplace availability or video-attachment support in every chat application.
+Host-specific adapters are provided. Actual MCP Client and HTTP cloud-render workflows were verified in an isolated n8n 2.38.7 environment using an operator-provisioned credential; 0.2.3 also supplies personal OAuth2 configurations. This does not certify every host's OAuth UI: Claude/Qwen clients, n8n Cloud, AI Agent tool selection and consumer DeepSeek/Doubao chat integrations remain unverified.
+
+See the [n8n setup guide](examples/n8n/README.md), [0.2.3 acceptance report](docs/ACCEPTANCE-0.2.3.zh-CN.md) and [historical 0.2.2 report](docs/ACCEPTANCE-2026-09-14.zh-CN.md). MCP compatibility does not imply official marketplace availability or video-attachment support in every chat application.
 
 ## Support
 

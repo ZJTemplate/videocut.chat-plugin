@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "videocut-chat",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Local video composition, fancy captions and editable native projects.",
   "author": {"name": "videocut.chat"},
   "keywords": ["video", "captions", "local-rendering", "mcp"],

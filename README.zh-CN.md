@@ -4,7 +4,7 @@
 
 让 AI 助手为视频添加花字字幕、编排画面，并保留可编辑工程。底层使用带许可证校验的 `template_generator` 原生引擎。
 
-**当前版本：0.2.2 · 受控内测 · 已在配置完整的 macOS 环境验证原生合成。**
+**当前版本：0.2.3 · 受控内测 · 已在 macOS 验证私有安装及发行资源的真实合成。**
 
 这是插件和 Python 工具包的公开发行仓库，不是双击即用的原生应用，也不代表已经发布到 PyPI 或上架官方插件市场。
 
@@ -14,20 +14,20 @@
 - 通过 MCP 创建、读取和修改视频工程，无需模型直接编写底层工程 JSON。
 - 导出 MP4、SkyMedia `.sky` 工程及包含引用资源的可编辑 ZIP。
 - 查询进度、取消运行中的任务，通过幂等键避免重试重复创建任务。
-- 通过本地 MCP、多宿主配置，或另行开通的云端网关接入。
+- 通过本地 MCP、多宿主配置，或单独授权的个人云端连接接入。
 
-目录包含 224 个条目，实际可用数量由资源安装情况决定。测试环境有 211 个可用条目，不代表逐一完成了 211 个效果的视觉验收。
+目录包含 224 个条目。新版 wheel 已包含 211 个样式所需的资源和回退字体，另 13 个条目需要另行提供资源。资源可用不等于所有语言、任意字幕长度都能得到理想视觉效果。
 
 ## 下载
 
 | 文件 | 用途 |
 | --- | --- |
-| [Python wheel](releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl) | `saycut-tools` 工具程序及 MCP 服务 |
-| [插件 ZIP](releases/v0.2.2/videocut-chat-plugin-0.2.2.zip) | 通用插件配置与视频 Skill |
-| [SHA256SUMS](releases/v0.2.2/SHA256SUMS) | 两个发行包的校验和 |
-| [版本说明](releases/v0.2.2/RELEASE_NOTES.md) | 验证范围和已知限制 |
+| [Python wheel](releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl) | `saycut-tools` 工具程序、MCP 服务和样式资源 |
+| [插件 ZIP](releases/v0.2.3/videocut-chat-plugin-0.2.3.zip) | 通用插件配置与视频 Skill |
+| [SHA256SUMS](releases/v0.2.3/SHA256SUMS) | 两个发行包的校验和 |
+| [版本说明](releases/v0.2.3/RELEASE_NOTES.md) | 验证范围和已知限制 |
 
-**只安装插件 ZIP 不会完成合成环境安装。** wheel 包含 Python 工具代码，不内置原生 SDK、运行时、字体、效果资源、许可证或语音识别模型。
+**只安装插件 ZIP 不会完成合成环境安装。** wheel 包含 Python 代码、效果资源和带许可文件的思源黑体回退字体。SDK Python 包由安装器另行安装；原生运行时和 ASR 模型通过明确的下载选项获取。不内置账号凭据或 SDK 证书。
 
 ## 本地安装
 
@@ -35,11 +35,10 @@
 
 - Python 3.11 或更新版本，支持 `pip` 和 `venv`。
 - PATH 中可访问的 FFmpeg、ffprobe。
-- 有效授权且匹配操作系统的 TemplateProcess 运行时；运行时目录内应包含 `skymedia/` 及所需原生依赖。
-- 已获使用授权的效果资源和字体，以及有本地合成权益的平台账号。
+- 有本地合成权益的平台账号；附带资源不代表免除 SDK 许可证校验。
 - 用于安装依赖、明确下载模型、账号授权和许可证校验的网络连接。
 
-缺少运行时或资源时，请先通过 videocut.chat 的 SDK 分发渠道或支持联系人获取；本仓库不提供这些资源。Windows/Linux 有配置适配，但本版本尚未完成这些系统的原生合成验收。
+安装器通过 `--download-resources` 下载并校验固定版本的原生运行时。已有运行时可改用 `--runtime-dir` 指定包含 `skymedia/` 的目录。Windows/Linux 有配置适配，但本版本尚未完成这些系统的原生合成验收。
 
 ### 2. 下载并校验
 
@@ -55,33 +54,24 @@ python3 scripts/verify_release.py
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl \
+  --wheel releases/v0.2.3/saycut_tools-0.2.3-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
-  --runtime-dir "/absolute/path/to/runtime" \
-  --asr
+  --download-resources --asr --download-model
 ```
 
-安装器在 `~/.local/share/saycut-plugin` 下创建私有环境，安装 wheel 和 `p-template-generator==1.2.17`，并生成匹配当前电脑路径的接入文件。`--asr` 同时安装本地语音识别依赖。**不会覆盖全局 pip 包，也不会替换用户已有的 `template_generator`。**
+安装器在 `~/.local/share/saycut-plugin` 下创建私有环境，安装 wheel 和 `p-template-generator==1.2.17`，并生成匹配当前电脑路径的接入文件。`--asr` 安装并启用本地识别，`--download-model` 下载模型。**不会覆盖全局 pip 包，也不会替换用户已有的 `template_generator`。** 原生 SDK 与 cloud/deploy 依赖需分开环境，其 Click 版本要求不兼容。
 
 记录安装器返回的 `python`、`config`、`integrations` 路径。下面的占位符必须替换成这些真实路径，不能原样执行。
 
-### 4. 配置效果和识别模型
+### 4. 检查就绪状态
 
-绑定可信且已授权的效果文件与回退字体：
+以上命令已经准备标准资源。合成前检查依赖：
 
 ```bash
-"<python>" -I -m saycut_tools.cli --config "<config>" catalog bind \
-  --style runtime/ZapMotion \
-  --path "/absolute/path/to/ZapMotion/text.fceffect" \
-  --fallback-font "/absolute/path/to/licensed-font.ttf"
-
-"<python>" -I -m saycut_tools.cli --config "<config>" configure-asr \
-  --backend faster_whisper --model small --download-model
-
 "<python>" -I -m saycut_tools.cli --config "<config>" doctor --check
 ```
 
-模型需要明确下载，不会因此上传用户视频。诊断检查的是前置条件，不代表所有效果正常或许可证授权下的真实渲染已经成功。未配置原生运行时与资源的新环境应当返回未就绪。
+下载资源或模型不会上传视频。需要稍后准备时，使用相同 Python/config 前缀运行 `setup-resources`，以及 `configure-asr --backend faster_whisper --model small --download-model`。诊断检查前置条件，不代表每个效果正常或许可证授权下的真实渲染已经成功。
 
 ### 5. 接入大模型
 
@@ -109,11 +99,17 @@ python3 scripts/install_isolated.py \
 
 ## 云端与兼容性边界
 
-云端 MCP 地址为 `https://mcp.zjtemplate.com/mcp`，访问权限另行开通，不能共用管理员 token。公开用户 OAuth、支付退款及全面开放的接入流程尚未完成。
+云端 MCP 地址为 `https://mcp.zjtemplate.com/mcp`。0.2.3 已增加 OAuth 发现、动态客户端注册、PKCE、令牌轮换/撤销和平台确认页。请求 scope 为 `account:read video:cloud`；网站登录 token 和旧本地授权不能直接当云端凭据，也不能给用户分发管理员 token。
+
+仅支持 stdio 的宿主，可先运行 `"<python>" -I -m saycut_tools.cli --config "<config>" account login --cloud`，亲自确认授权后使用生成的 `remote-mcp` 配置。它使用可自动续期的独立个人凭据，不替换原有本地 SDK 授权。
+
+云端沿用平台 GenVideo 价格和余额体系。自动 ASR 按时长上限预留余额：目前默认 600 秒、0.01 元/秒时预留 6 元，**不是每次固定收 6 元**。结束后按模块实际用量结算，多余预留、失败及取消任务退回。当前旧 worker 上报 `usage={}`，按现有规则最终收费为 0；完整生产计量仍依赖 worker 上报真实用量。
 
 已验证的旧版云端链路开放一个预设及 MP4 输出，尚未提供本地全部效果或可编辑云端工程。`edit.videocut.chat` 尚未部署编辑器桥接，不能把生成交接链接描述为已经实现在线编辑。
 
-本版本提供多宿主适配文件，但尚未验收 Claude/Qwen 客户端会话、真实 n8n 环境或 DeepSeek/豆包消费者聊天入口。协议兼容不代表已上架官方市场，也不保证每个聊天客户端都支持视频附件。
+本版本提供多宿主适配文件。已在独立的 n8n 2.38.7 环境验证原生 MCP Client 和 HTTP 云端合成工作流，使用的是运营配置的凭据；0.2.3 另提供个人 OAuth2 配置。这不代表每个宿主的 OAuth 界面均已验收：Claude/Qwen 客户端、n8n Cloud、AI Agent 自主选工具或 DeepSeek/豆包消费者聊天入口仍未验收。
+
+参见 [n8n 示例和接入说明](examples/n8n/README.md)、[0.2.3 验收记录](docs/ACCEPTANCE-0.2.3.zh-CN.md)及[0.2.2 历史验收](docs/ACCEPTANCE-2026-09-14.zh-CN.md)。协议兼容不代表已上架官方市场，也不保证每个聊天客户端都支持视频附件。
 
 ## 支持
 
