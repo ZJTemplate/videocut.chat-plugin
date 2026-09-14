@@ -21,4 +21,6 @@
 
 The production legacy worker still offers one preset and MP4 only; no full local style catalog, per-caption controls or editable cloud output. `edit.videocut.chat` needs its editor bridge deployed. Windows/Linux native rendering, consumer chat clients, and user-approved n8n OAuth UI are not accepted by these checks. See [the acceptance report](../../docs/ACCEPTANCE-0.2.3.zh-CN.md) for the latest user-consent test status.
 
+The latest live cloud regression uploaded and submitted successfully but did not finish within the acceptance window. Polling experienced a connection timeout; the same job was recovered and cancelled, with final gateway status confirmed. This run did not produce an accepted MP4, so cloud rendering stability remains unverified.
+
 线上旧 worker 仍需补充真实用量和完整工程协议；不能把预扣当作最终价格，也不能将本地能力宣传成已全部云端开放。未绕过 SDK license、平台授权或厂商地区审核。

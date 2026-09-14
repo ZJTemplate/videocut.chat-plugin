@@ -107,6 +107,8 @@ Cloud generation uses the platform's existing GenVideo rates and balance. Automa
 
 The verified legacy cloud workflow exposes one preset and MP4 output. It does not yet provide the full local effect catalog or editable cloud projects. Opening a handoff URL does not establish a working session at `edit.videocut.chat`; the editor bridge is not deployed.
 
+The latest 0.2.3 cloud regression did not finish within the acceptance window and was cancelled after recovering from a polling connection timeout. Earlier successful runs do not establish cloud rendering stability; this remains a controlled beta.
+
 Host-specific adapters are provided. Actual MCP Client and HTTP cloud-render workflows were verified in an isolated n8n 2.38.7 environment using an operator-provisioned credential; 0.2.3 also supplies personal OAuth2 configurations. This does not certify every host's OAuth UI: Claude/Qwen clients, n8n Cloud, AI Agent tool selection and consumer DeepSeek/Doubao chat integrations remain unverified.
 
 See the [n8n setup guide](examples/n8n/README.md), [0.2.3 acceptance report](docs/ACCEPTANCE-0.2.3.zh-CN.md) and [historical 0.2.2 report](docs/ACCEPTANCE-2026-09-14.zh-CN.md). MCP compatibility does not imply official marketplace availability or video-attachment support in every chat application.
