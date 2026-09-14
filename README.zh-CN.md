@@ -4,7 +4,7 @@
 
 让 AI 助手为视频添加花字字幕、编排画面，并保留可编辑工程。底层使用带许可证校验的 `template_generator` 原生引擎。
 
-**当前版本：0.2.1 · 受控内测 · 已在配置完整的 macOS 环境验证原生合成。**
+**当前版本：0.2.2 · 受控内测 · 已在配置完整的 macOS 环境验证原生合成。**
 
 这是插件和 Python 工具包的公开发行仓库，不是双击即用的原生应用，也不代表已经发布到 PyPI 或上架官方插件市场。
 
@@ -22,10 +22,10 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| [Python wheel](releases/v0.2.1/saycut_tools-0.2.1-py3-none-any.whl) | `saycut-tools` 工具程序及 MCP 服务 |
-| [插件 ZIP](releases/v0.2.1/videocut-chat-plugin-0.2.1.zip) | 通用插件配置与视频 Skill |
-| [SHA256SUMS](releases/v0.2.1/SHA256SUMS) | 两个发行包的校验和 |
-| [版本说明](releases/v0.2.1/RELEASE_NOTES.md) | 验证范围和已知限制 |
+| [Python wheel](releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl) | `saycut-tools` 工具程序及 MCP 服务 |
+| [插件 ZIP](releases/v0.2.2/videocut-chat-plugin-0.2.2.zip) | 通用插件配置与视频 Skill |
+| [SHA256SUMS](releases/v0.2.2/SHA256SUMS) | 两个发行包的校验和 |
+| [版本说明](releases/v0.2.2/RELEASE_NOTES.md) | 验证范围和已知限制 |
 
 **只安装插件 ZIP 不会完成合成环境安装。** wheel 包含 Python 工具代码，不内置原生 SDK、运行时、字体、效果资源、许可证或语音识别模型。
 
@@ -55,7 +55,7 @@ python3 scripts/verify_release.py
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.1/saycut_tools-0.2.1-py3-none-any.whl \
+  --wheel releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
   --runtime-dir "/absolute/path/to/runtime" \
   --asr

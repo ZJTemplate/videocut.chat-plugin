@@ -4,7 +4,7 @@
 
 Animated captions and editable video composition for AI assistants, powered by the licensed `template_generator` engine.
 
-**Version 0.2.1 · Controlled beta · Native rendering verified on a provisioned macOS environment.**
+**Version 0.2.2 · Controlled beta · Native rendering verified on a provisioned macOS environment.**
 
 This is the public distribution repository for the plugin and Python tool package. It is not a one-click native application, a PyPI publication, or a listing in an official plugin marketplace.
 
@@ -22,10 +22,10 @@ The catalog contains 224 entries; availability depends on installed resources. T
 
 | File | Purpose |
 | --- | --- |
-| [Python wheel](releases/v0.2.1/saycut_tools-0.2.1-py3-none-any.whl) | The `saycut-tools` implementation and MCP server |
-| [Plugin ZIP](releases/v0.2.1/videocut-chat-plugin-0.2.1.zip) | Portable plugin manifests and the video skill |
-| [SHA256SUMS](releases/v0.2.1/SHA256SUMS) | Checksums for the two archives |
-| [Release notes](releases/v0.2.1/RELEASE_NOTES.md) | Verified behavior and known limitations |
+| [Python wheel](releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl) | The `saycut-tools` implementation and MCP server |
+| [Plugin ZIP](releases/v0.2.2/videocut-chat-plugin-0.2.2.zip) | Portable plugin manifests and the video skill |
+| [SHA256SUMS](releases/v0.2.2/SHA256SUMS) | Checksums for the two archives |
+| [Release notes](releases/v0.2.2/RELEASE_NOTES.md) | Verified behavior and known limitations |
 
 Installing the plugin ZIP alone does not install the rendering environment. The wheel contains Python code; it does not embed the native SDK, native runtime, fonts, effects, a license, or an ASR model.
 
@@ -55,7 +55,7 @@ Replace the example paths with existing directories. These commands target macOS
 
 ```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.1/saycut_tools-0.2.1-py3-none-any.whl \
+  --wheel releases/v0.2.2/saycut_tools-0.2.2-py3-none-any.whl \
   --allow-root "/absolute/path/to/videos" \
   --runtime-dir "/absolute/path/to/runtime" \
   --asr

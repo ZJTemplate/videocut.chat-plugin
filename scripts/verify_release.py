@@ -1,16 +1,25 @@
 """Verify bundled release checksums and ZIP integrity without installing anything."""
 
+import argparse
 import hashlib
+import json
 import re
 import zipfile
 from pathlib import Path
 
 
 def main():
-    root = Path(__file__).resolve().parents[1] / "releases/v0.2.1"
+    repository = Path(__file__).resolve().parents[1]
+    current = json.loads((repository / "plugins/videocut-chat/plugin.json").read_text())["version"]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", default=current)
+    version = parser.parse_args().version
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise ValueError("Expected a release version such as 0.2.2")
+    root = repository / "releases" / f"v{version}"
     expected = {
-        "saycut_tools-0.2.1-py3-none-any.whl",
-        "videocut-chat-plugin-0.2.1.zip",
+        f"saycut_tools-{version}-py3-none-any.whl",
+        f"videocut-chat-plugin-{version}.zip",
     }
     seen = set()
     for line in (root / "SHA256SUMS").read_text().splitlines():

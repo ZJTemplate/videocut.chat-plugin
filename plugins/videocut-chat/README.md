@@ -12,9 +12,10 @@ client ID remain compatible. This rename does not replace the underlying Saycut 
 - A compatible, licensed TemplateProcess runtime and authorized effect/font resources.
 - A Saycut configuration selected with `SAYCUT_CONFIG`; local media must be inside `allowed_roots`.
 
-For personal accounts, use `scripts/install_isolated.py` from the companion source distribution
-with the release wheel, an allowed video directory and the native runtime directory. It installs
-`native,asr` dependencies only in its owned virtual environment, leaving existing Python packages
+For personal accounts, use `scripts/install_isolated.py` from the
+[public distribution repository](https://github.com/ZJTemplate/videocut.chat-plugin)
+with the release wheel, an allowed video directory and the native runtime directory. With `--asr`,
+it installs `native,asr` dependencies only in its owned virtual environment, leaving existing Python packages
 untouched. Configure authorized effect/font resources using the returned private configuration.
 The skill checks account status, shows the platform consent link when disconnected, and completes
 the connection after the user approves. Credentials stay in the private data directory, not here.
@@ -46,5 +47,5 @@ MP4 only, with administrator-enabled styles. Editable Sky/ZIP output needs the c
 adapter on the actual remote machine. An online editing link additionally needs the editor bridge.
 
 Public marketplace submission and commercial resource licenses are separate from installing
-this development package. See the companion project's `PLATFORM_SUBMISSION.md` for verified
-submission routes.
+this development package. See the public distribution repository's README for installation
+instructions and the release's verified compatibility limits.
