@@ -151,7 +151,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--wheel", type=Path, required=True)
     parser.add_argument(
-        "--plugin-source", type=Path, default=Path(__file__).resolve().parents[2] / "plugins/videocut-chat"
+        "--plugin-source", type=Path, default=Path(__file__).resolve().parents[1] / "plugins/videocut-chat"
     )
     parser.add_argument("--root", type=Path, default=Path.home() / ".local/share/saycut-plugin")
     parser.add_argument("--allow-root", type=Path, action="append", required=True)
