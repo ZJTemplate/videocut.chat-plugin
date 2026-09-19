@@ -2,120 +2,91 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-让 AI 助手为视频添加花字字幕、编排画面，并保留可编辑工程。底层使用带许可证校验的 `template_generator` 原生引擎。
+为 **AI 编程智能体宿主**（Codex、Claude Code、Qwen Code 及任意 MCP 客户端）提供花字字幕、确定性视频合成与可编辑 SkyMedia 工程。底层是带许可证校验的 `template_generator` 原生引擎，运行在你自己的机器上。
 
-**当前版本：0.2.5 · 受控内测 · 已在 macOS 验证私有安装及发行资源的真实合成。**
+**版本 0.3.1 · 受控内测 · 面向高级用户。**
+如果你还没有在用支持 MCP 的编程智能体，请直接使用网页产品 [videocut.chat](https://videocut.chat)。本仓库不是双击即用的应用，未发布到 PyPI，也未上架官方插件市场。
 
-这是插件和 Python 工具包的公开发行仓库，不是双击即用的原生应用，也不代表已经发布到 PyPI 或上架官方插件市场。
+## 工作流
 
-## 能做什么
+1. **一次安装**（约 10 分钟，下文一条复制粘贴命令块；也可以把仓库 URL 丢给你的 agent，让它按"安装"一节执行并把生成的配置合并进宿主）。
+2. **一次授权。** 首次渲染会打开 [platform.zjtemplate.com](https://platform.zjtemplate.com) 的审批页。0.3.x 起后台 keepers 会静默续期账号 token 和 SDK 租约（36 小时水位），不需要周期性重新登录。
+3. **自然语言驱动**："给这段视频加中文花字字幕，工程保持可编辑。" agent 负责转录（本地 faster-whisper）、从已安装样式目录选花字、组工程并**本地渲染**；除非你明确允许云端处理，素材不出本机。
+4. **迭代分两条轨**：文字/样式/时间轴改动在聊天里用 MCP 工具完成；**要"看着调"**时，插件给出 `edit.videocut.chat` 深链，浏览器编辑器直接导入这份工程（线上已验证，含 32MB 多素材包的 OPFS 导入）。
+5. **回流闭环**：编辑器导出 `.saycut.zip` 工程包，同机场景把下载的文件路径给回 agent，即可在聊天里继续修改、重渲。
 
-- 本地识别语音，使用已安装的花字与动效资源添加字幕。
-- 通过 MCP 创建、读取和修改视频工程，无需模型直接编写底层工程 JSON。
-- 导出 MP4、SkyMedia `.sky` 工程及包含引用资源的可编辑 ZIP。
-- 查询进度、取消运行中的任务，通过幂等键避免重试重复创建任务。
-- 本地片段支持 `fit=contain` 留边和 `fit=cover` 居中裁切，保持比例；旧工程默认行为不变。
-- 通过本地 MCP、多宿主配置，或单独授权的个人云端连接接入。
+## 真实状态矩阵（能力现在到底在哪一步）
 
-目录包含 224 个条目。新版 wheel 已包含 211 个样式所需的资源和回退字体，另 13 个条目需要另行提供资源。资源可用不等于所有语言、任意字幕长度都能得到理想视觉效果。
+| 能力 | 状态 |
+| --- | --- |
+| 隔离环境安装 + 发行资源本地渲染（macOS） | ✅ 已验收（0.2.5 验收 + 0.3.1 全进程 serve e2e 进 CI） |
+| 一次授权、token/许可证自动续期 | ✅ 0.3.1 实装（`TokenKeeper` / `LicenseKeeper`） |
+| MCP 工具面：导入/转录/花字/组工程/渲染/取消/幂等重试 | ✅ 契约与 CI 验证；Claude/Qwen 等宿主自身的 OAuth UI 未实测 |
+| 浏览器编辑器工程注入（`edit.videocut.chat/editor?file=…`） | ✅ 线上可用并公网验证 |
+| SDK 路由 `GET /v1/jobs/{id}/editable-bundle` | ✅ 0.3.1 实装——但它由**你的** gateway 提供，公网浏览器访问不到本机，深链只对"浏览器可达的 gateway"生效 |
+| 云端工程库往返（`saycut_save_to_edit`） | 🟡 SDK 客户端 + REST + MCP 三通道已完成；`mcp.zjtemplate.com` 的 `POST /mcp/v1/edit-projects` 受理端点尚未由平台方上线，跨设备交接被它卡住 |
+| 聊天 ↔ 内嵌编辑器双通道（`postMessage`） | 🟡 Node 契约测试通过；只对带 webview 的宿主有意义——终端型 agent（Codex/CC CLI）请走导出文件回流 |
+| `McpRender` 云端渲染（`mcp.zjtemplate.com`） | 🟡 3 个真实任务 66/66/96 秒完成，但用的是运营验收凭证；个人 OAuth + 计费闭环未验收；生产 worker 仍注册 legacy `GenVideo`（别名 `saycut_tools_v1` 过渡） |
+| Windows / Linux 原生渲染 | ⬜ 有配置，未验收 |
+| 预览段渲染（短时间窗试渲） | ⬜ 未实现——目前每次渲染都是全量 job |
 
-## 下载
+样式目录共 224 个条目，本 wheel 打包了 211 个样式的资源和思源黑体回退字体，另外 13 个需要自备资源。"可用"不等于任何语言、任意字幕长度都有理想观感：长文案换行、缺字、装饰字裁切是已知缺陷；导入前请按 skill 内的 FFmpeg 流程归一化旋转元数据与非方形像素。
+
+## 下载（0.3.1）
 
 | 文件 | 用途 |
 | --- | --- |
-| [Python wheel](releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl) | `saycut-tools` 工具程序、MCP 服务和样式资源 |
-| [插件 ZIP](releases/v0.2.5/videocut-chat-plugin-0.2.5.zip) | 通用插件配置与视频 Skill |
-| [SHA256SUMS](releases/v0.2.5/SHA256SUMS) | 两个发行包的校验和 |
-| [版本说明](releases/v0.2.5/RELEASE_NOTES.md) | 验证范围和已知限制 |
+| [Python wheel](releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl) | `saycut-tools`：MCP 服务、本地 gateway、编辑器资产、样式资源 |
+| [插件 ZIP](releases/v0.3.1/videocut-chat-plugin-0.3.1.zip) | 通用插件配置与视频 Skill |
+| [SHA256SUMS](releases/v0.3.1/SHA256SUMS) | 两个发行包的校验和 |
 
-**只安装插件 ZIP 不会完成合成环境安装。** wheel 包含 Python 代码、效果资源和带许可文件的思源黑体回退字体。SDK Python 包由安装器另行安装；原生运行时和 ASR 模型通过明确的下载选项获取。不内置账号凭据或 SDK 证书。
+下载后运行 `python3 scripts/verify_release.py` 校验。wheel 是可直接审阅的 Python，打包不等于加密。安装器显式下载：钉定的原生 SDK（`p-template-generator==1.2.17`，`native` extra）、可选 `faster-whisper`（`asr` extra）、运行时二进制与 ASR 模型。任何发行包都不含账号凭证或 SDK 证书。
 
-## 本地安装
+## 安装（macOS / POSIX）
 
-### 1. 准备依赖
-
-- Python 3.11 或更新版本，支持 `pip` 和 `venv`。
-- PATH 中可访问的 FFmpeg、ffprobe。
-- 有本地合成权益的平台账号；附带资源不代表免除 SDK 许可证校验。
-- 用于安装依赖、明确下载模型、账号授权和许可证校验的网络连接。
-
-安装器通过 `--download-resources` 下载并校验固定版本的原生运行时。已有运行时可改用 `--runtime-dir` 指定包含 `skymedia/` 的目录。Windows/Linux 有配置适配，但本版本尚未完成这些系统的原生合成验收。
-
-### 2. 下载并校验
+前提：Python ≥ 3.11；PATH 中有 FFmpeg 与 ffprobe；具备本地渲染权限的平台账号；下载与许可证校验需要联网。
 
 ```bash
 git clone https://github.com/ZJTemplate/videocut.chat-plugin.git
 cd videocut.chat-plugin
 python3 scripts/verify_release.py
-```
 
-### 3. 运行独立安装器
-
-将示例路径替换为实际存在的目录。以下命令适用于 macOS/POSIX shell。
-
-```bash
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.2.5/saycut_tools-0.2.5-py3-none-any.whl \
-  --allow-root "/absolute/path/to/videos" \
+  --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
+  --allow-root "/绝对路径/视频目录" \
   --download-resources --asr --download-model
 ```
 
-安装器在 `~/.local/share/saycut-plugin` 下创建私有环境，安装 wheel 和 `p-template-generator==1.2.17`，并生成匹配当前电脑路径的接入文件。`--asr` 安装并启用本地识别，`--download-model` 下载模型。**不会覆盖全局 pip 包，也不会替换用户已有的 `template_generator`。** 原生 SDK 与 cloud/deploy 依赖需分开环境，其 Click 版本要求不兼容。
-
-记录安装器返回的 `python`、`config`、`integrations` 路径。下面的占位符必须替换成这些真实路径，不能原样执行。
-
-### 4. 检查就绪状态
-
-以上命令已经准备标准资源。合成前检查依赖：
+安装过程在 `~/.local/share/saycut-plugin` 下创建私有环境（不碰全局 site-packages），完成后打印三个路径：`python`、`config`、`integrations`。就绪检查：
 
 ```bash
 "<python>" -I -m saycut_tools.cli --config "<config>" doctor --check
 ```
 
-下载资源或模型不会上传视频。需要稍后准备时，使用相同 Python/config 前缀运行 `setup-resources`，以及 `configure-asr --backend faster_whisper --model small --download-model`。诊断检查前置条件，不代表每个效果正常或许可证授权下的真实渲染已经成功。
+资源与模型以后可再跑 `setup-resources`、`configure-asr --backend faster_whisper --model small --download-model` 补齐。诊断只检查前置条件，不代表每个特效或一次获授权的渲染成功。
 
-### 5. 接入大模型
+## 接入你的智能体
 
-使用返回的 `integrations` 目录内生成的配置，**不要直接原样使用本仓库中的通用 manifest**：
+使用 `integrations` 目录下**生成的**配置文件——不要原样使用仓库里的通用 manifest：
 
 | 宿主 | 生成的配置 |
 | --- | --- |
-| Codex | `codex.toml`；完整本地插件位于 `plugins/videocut-chat/` |
-| Claude Desktop | `claude-desktop.json` |
+| Codex | `codex.toml`，或将 `plugins/videocut-chat/` 注册为本地插件源 |
 | Claude Code | `claude-code.mcp.json` 或生成的插件目录 |
+| Claude Desktop | `claude-desktop.json` |
 | Qwen Code | `qwen.settings.json` |
-| 其他 MCP 宿主 | 兼容的 stdio 配置 |
+| 其他 MCP 宿主 | 兼容的 stdio 生成配置 |
 
-通过宿主的 MCP 配置入口合并对应服务，不要覆盖其他设置。若要使用完整的 Codex Skill 流程，需将**安装器生成的插件目录**注册为本地插件来源。仅 clone 仓库不会自动安装或注册插件。新建对话，确认可以调用 `saycut_capabilities`。
+用宿主的 MCP 配置机制合并，勿覆盖无关设置；新开对话确认 `saycut_capabilities` 可见。首次渲染时插件会打开授权链接——自行登录并批准；凭证与短时效 SDK 证书只保存在私有运行时目录。
 
-首次使用时，按插件给出的授权链接打开[平台](https://platform.zjtemplate.com)，登录并亲自确认授权。凭据和短期 SDK 证书保存在插件私有目录，不写入插件 manifest。
+## 云端、编辑器桥与边界
 
-可以这样开始：“为这个本地视频添加中文花字字幕，并保留可编辑工程。”请复核识别结果、选择可用样式，并等待返回的任务完成。
+云端提交统一走 `https://mcp.zjtemplate.com/mcp` 的 `McpRender`（0.2.3+ 支持 OAuth discovery、动态注册、PKCE、token 轮换/吊销）。网页登录 token 或本地授权不等于云端凭证；纯 stdio 宿主跑一次 `account login --cloud`。云端计费沿用平台 GenVideo 费率：自动 ASR 按配置时长上限预扣（当前 600 秒 × ¥0.01/秒），完成后按实际上报用量结算并退还差额——legacy worker 目前上报 `usage={}`，生产计量要等该 worker 升级。云端 legacy 链路只验证了单一 preset + MP4 输出；完整特效目录与可编辑云端工程尚不可用。
 
-## 隐私与授权
+编辑器桥分两段看：**浏览器端**（工程注入 `edit.videocut.chat`、OPFS 导入、导出提示、字节级往返）已上线并公网验证；**平台端**（公共工程库 `POST /mcp/v1/edit-projects`）尚未开始受理，`saycut_save_to_edit` 目前只能对着 stub 完成。在此之前，指向非公网 gateway 的 `?file=` 链接不会在浏览器里加载——不要把交接链接当作会话可用的证据，同机导出回流是当前可靠路径。
 
-本地合成不会自动上传视频，也不会在失败时静默转到云端。账号与许可证仍会在线校验，因此“本地优先”不等于完全离线。云端处理需明确授权，本地输入和输出不会自动删除。
-
-不要提交 token、SDK 证书、私有配置或客户素材。公开可下载不代表 SDK、字体、效果素材已开放源码或允许商业再分发；分别遵循相应条款。wheel 内的 Python 代码可查看，打包不是加密。
-
-## 云端与兼容性边界
-
-云端 MCP 地址为 `https://mcp.zjtemplate.com/mcp`。0.2.3 已增加 OAuth 发现、动态客户端注册、PKCE、令牌轮换/撤销和平台确认页。请求 scope 为 `account:read video:cloud`；网站登录 token 和旧本地授权不能直接当云端凭据，也不能给用户分发管理员 token。
-
-仅支持 stdio 的宿主，可先运行 `"<python>" -I -m saycut_tools.cli --config "<config>" account login --cloud`，亲自确认授权后使用生成的 `remote-mcp` 配置。它使用可自动续期的独立个人凭据，不替换原有本地 SDK 授权。
-
-云端沿用平台 GenVideo 价格和余额体系。自动 ASR 按时长上限预留余额：目前默认 600 秒、0.01 元/秒时预留 6 元，**不是每次固定收 6 元**。结束后按模块实际用量结算，多余预留、失败及取消任务退回。当前旧 worker 上报 `usage={}`，按现有规则最终收费为 0；完整生产计量仍依赖 worker 上报真实用量。
-
-已验证的旧版云端链路开放一个预设及 MP4 输出，尚未提供本地全部效果或可编辑云端工程。`edit.videocut.chat` 尚未部署编辑器桥接，不能把生成交接链接描述为已经实现在线编辑。
-
-0.2.5 部署后的三个真实远端任务均完成，上传至下载约 66、66、96 秒，包括 MCP、REST 和幂等重试；中文素材约 5 秒，英文素材约 86 秒。使用的是运营验收凭据，不等于个人 OAuth、扣费已完成端到端验收，也不足以给出生产 SLA。短视频仍需约一分钟，云端能力边界见下方验收记录。
-
-0.2.5 同时包含非法输入、字幕文件、厂商调用授权和原生进度文件容错修复。画面适配不会自动解决长字幕换行、字体缺字或装饰越界。非方形像素、带旋转信息的视频先按 Skill 的 FFmpeg 步骤标准化再导入；此步骤重新编码，不覆盖原片。详见 [0.2.5 验收](docs/ACCEPTANCE-0.2.5.zh-CN.md)。
-
-本版本提供多宿主适配文件。已在独立的 n8n 2.38.7 环境验证原生 MCP Client 和 HTTP 云端合成工作流，使用的是运营配置的凭据；0.2.3 另提供个人 OAuth2 配置。这不代表每个宿主的 OAuth 界面均已验收：Claude/Qwen 客户端、n8n Cloud、AI Agent 自主选工具或 DeepSeek/豆包消费者聊天入口仍未验收。
-
-参见 [n8n 示例和接入说明](examples/n8n/README.md)、[0.2.3 验收记录](docs/ACCEPTANCE-0.2.3.zh-CN.md)及[0.2.2 历史验收](docs/ACCEPTANCE-2026-09-14.zh-CN.md)。协议兼容不代表已上架官方市场，也不保证每个聊天客户端都支持视频附件。
+本地渲染不会静默上传素材；但账号/许可证校验仍会联系授权服务：本地优先不等于完全离线。任何云端处理都需要显式同意（`allow_cloud_processing`）。不要把 token、证书、私有配置或客户素材提交进仓库。
 
 ## 支持
 
-通过 [GitHub Issues](https://github.com/ZJTemplate/videocut.chat-plugin/issues) 提交可复现问题，附操作系统、Python/包版本及脱敏诊断。不要上传凭据或私人视频。若凭据泄露，应先通过平台账号撤销对应连接，再提供脱敏报告。
+可复现问题请提 [GitHub Issues](https://github.com/ZJTemplate/videocut.chat-plugin/issues)，附 OS、Python/包版本与脱敏诊断；切勿附上凭证或私有视频。凭证泄露先回平台吊销连接再报。验收记录：[0.2.5](docs/ACCEPTANCE-0.2.5.zh-CN.md)、[0.2.3](docs/ACCEPTANCE-0.2.3.zh-CN.md)、[2026-09-14](docs/ACCEPTANCE-2026-09-14.zh-CN.md)；安装指南见 [docs/INSTALL.zh-CN.md](docs/INSTALL.zh-CN.md)。
