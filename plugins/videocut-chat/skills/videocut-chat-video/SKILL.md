@@ -82,7 +82,7 @@ In webview hosts (embedded chat ⇄ editor iframe) the dual-channel postMessage 
 
 ## 4. Timing and preview expectations
 
-Local rendering on an Apple-Silicon Mac with the pinned native runtime reaches interactive feedback in seconds for short clips (a 5-second 720p single-track composition has been measured well under a minute including engine start; see `docs/` in the plugin repo for the current timing table before quoting numbers to customers). There is **no time-window preview parameter yet**: `render_video`/`render_project` always render the full composition. For a "preview" today, create a project slice by editing the timeline in-revision (drop tracks beyond the window via `saycut_update_project`) rather than promising a `preview` argument that does not exist.
+Local rendering speed has **not been publicly benchmarked yet**: the first timed runs (5s/30s/60s clips on an Apple-Silicon Mac with the pinned native runtime) require an account holding a local-render entitlement and are tracked in `docs/TIMING.zh-CN.md` in this repository. Do not quote seconds — including "3–5 seconds" — to customers until that table has dated rows; report wall time only from a job you actually polled in this session. There is **no time-window preview parameter**: `render_video`/`render_project` always render the full composition. For a "preview" today, create a project slice by editing the timeline in-revision (drop tracks beyond the window via `saycut_update_project`) rather than promising a `preview` argument that does not exist.
 
 ## 5. License keepers and account hygiene
 
