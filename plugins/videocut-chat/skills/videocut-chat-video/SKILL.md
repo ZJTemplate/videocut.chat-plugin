@@ -60,9 +60,18 @@ The editor page ingests a project from a **public GET URL** (`https://edit.video
 
 - **Cloud job (backend=cloud).** The gateway exposes `GET <public_base_url>/v1/jobs/<job_id>/editable-bundle`. Call `saycut_editor_handoff` and pass the returned `editor_url` to the user. Treat `integration_status` as authoritative: when it is `editor_bridge_required` or `gateway_is_loopback` is true, do not claim the link opens for someone else's browser — the user on the same machine still can, everyone else needs the local bundle file instead.
 - **Local job.** The render result already includes a downloadable editable bundle stored on the user's disk. Copy or mention that path and tell the user to open it with the editor's project-import control. Do **not** fabricate a public URL, do not spin up a tunnel, and do not advertise the loopback handoff link as "works anywhere".
-- **Cross-device library.** `saycut_save_to_edit` mirrors a project revision to the McpRender edit-project store on `mcp.zjtemplate.com` and returns a `cloud_edit_project_id`. The public acceptance endpoint is still being rolled out; if the call fails with a 4xx/5xx, fall back to the local-bundle path and say so.
+- **Cross-device library (`saycut_save_to_edit`).** The tool mirrors a project revision to the remote edit-project store on `mcp.zjtemplate.com` (`/saycut/create` on first save, `/saycut/update` for subsequent revisions with `expected_head_version_id` conflict detection). The remote store is keyed by the cloud OAuth user_id, so the project is reachable from any device once the user opens `edit.videocut.chat` in the cloud-authenticated browser. **Cloud access requires `account login --cloud`** in addition to the local license OAuth — the two scopes are distinct (local rendering vs. cloud account library). If the tool returns `insufficient_scope` / `Authorize cloud access with account login --cloud`, walk the user through the `--cloud` device-code flow first. On a network error the tool raises `remote_edit_unavailable`; surface it verbatim and do not silently retry against the local store.
 
 Never expose a signed download URL or bearer token inside a `?file=` parameter that you paste into chat; handoff tokens belong only in the fragment (`#saycut_handoff=...`), which the browser never sends to the server.
+
+### 2.1 Deep-link recipes for the embedded editor
+
+The editor imports whatever its `file` URL serves; the SDK now exposes two routes the chat can hand it:
+
+- `GET <public_base_url>/v1/jobs/<job_id>/editable-bundle` — bundle zip from a finished render job (this is the canonical `?file=` payload).
+- `GET <public_base_url>/v1/projects/<project_id>/sky` — direct SkyMedia JSON for the head revision of a persisted project; available **without a bearer token** (the editor deep-link flow has no place to send one). Use this when the user has saved a project via `saycut_save_to_edit` and wants to re-open it on another device without first rendering again.
+
+Both routes only work when the gateway is publicly reachable. For loopback hosts, give the user the local bundle path and let the editor's Open-project control consume it.
 
 ## 3. Getting edits back into the agent (reflow)
 

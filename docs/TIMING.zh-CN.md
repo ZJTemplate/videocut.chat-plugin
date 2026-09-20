@@ -28,8 +28,13 @@ $PY -I -m saycut_tools.cli --config $CFG call saycut_render_video --json @render
 | 2026-09-20 | Apple-Silicon, macOS 15, runtime 已下载 | 5s（1 字幕） | 冷（首 job） | **29.33** | `job_c64cad17…`，`progress` 从 0→1 期间 wall；CLI 提交后到 succeeded 含 worker 调度 |
 | 2026-09-20 | 同上 | 30s（1 字幕） | 冷（被 5s 排队） | **29.02** | `job_8e1d7491…`；SDK 默认 `concurrency=1`，30s 档被 5s 排队后启动，墙钟覆盖了渲染本身 |
 | 2026-09-20 | 同上 | 60s（1 字幕） | 冷（被 30s 排队） | **44.43** | `job_883fd2c9…`；首尾均含 worker 调度 |
+| 2026-09-20 | 同上 | 5s（无字幕） | 暖 | **44.1** | `job_febb1afc…`；连跑第三次安装，**反而更慢**——license keeper 在间隙轮转时返回 `account_unavailable` 致首次失败，retry 后才成功。**"暖态"在该仓库 keeper 设计下不可靠**：lease 剩余 ~36h 触发续期，但续期成功与否与窗口相关。 |
+| 2026-09-20 | 同上 | 30s（无字幕） | 暖（被 5s 排队） | **48.0** | `job_0fea609d…` |
+| 2026-09-20 | 同上 | 60s（无字幕） | 暖 | **failed / account_unavailable** | `job_48c3442d…`；lease 未及时续期，引擎 license 注入失败。本地 lease 短暂缺失的窗口真实存在** |
 
 **首次读法**：以上数字不是"引擎单纯合成耗时"——SDK 默认串行 1 worker（见 `doctor.limits.concurrency=1`），`wall` 包含：CLI 提交（<1s）+ 队列等待 + 引擎合成 + 写盘。**实测引擎本身大致与时长成正比（≈ 时长 + 24–28s 的冷启动/打包/记账开销）**。并发=1 是 SDK 许可设计（不是缺陷），需要并行请用户提需求。
+
+**暖态观察**：`license.{license.last_error}` 在连跑过程中短暂非空（即 lease 续期 race），60s 渲染因此失败。**这不是引擎速度问题，是 license 注入链路不稳定**——已记入 SKILL §5"License keepers and account hygiene"要求 agent 在 lease 失败时直接放弃本任务而不是用旧 lease 强渲（避免空文件、半渲染等静默异常）。
 
 **口径声明**（写进任何对外材料前必读）：5s 输入墙钟 29s 反映的是"首次本机渲染全旅程"，把这条数字告诉客户是失实的——同会话第二次 5s 渲染（暖引擎）会显著缩短，但本轮未连跑第三次暖态记录。**禁止在任何文档/对话里用单次 29s 反推"1s 5s"、"每秒 N 帧"、"3–5 秒"。**
 
@@ -91,3 +96,29 @@ unzip -p bundle.saycut.zip project.json | jq -r '.timelines[0]' > roundtrip.sky
 - `editor_url` 是浏览器友好的 fragment-token 形式，token **永远在 fragment**（`#saycut_handoff=`）——浏览器不会把 fragment 发给服务器，避免 token 泄漏到 access log。
 - `integration_status=editor_bridge_required` + `gateway_is_loopback=true` 表明：编辑器的 iframe 桥未上线 + gateway 是回环，本机用户能开，别人设备开不了。SKILL 已禁止向非本机用户宣传此链接。
 - 真实可下载的 bundle 在 `GET <public_base_url>/v1/jobs/<job_id>/files/bundle`（云端）或本机 `~/.local/share/saycut-plugin/data/jobs/<job_id>/editable-project.zip`（本地 daemon 跑完就发回磁盘）。本次 5s job bundle 实测 19,238,753B、325 entries、251 files，schema=`saycut-editable-bundle`，含 `timeline.sky` + 全部 effects/material。
+
+## 6. save_to_edit 远端契约（2026-09-20 实测）
+
+`save_to_edit` 在 0.3.1 经过实现替换后由 SDK 直接调远端 HTTP：
+
+| 端点 | 用途 | 鉴权 |
+| --- | --- | --- |
+| `GET <base>/saycut/list?id=<project_id>` | 检查远端是否已存在 | Bearer（keepers access_token） |
+| `POST <base>/saycut/create` | 首次保存（带 `sky_json`） | 同上 |
+| `POST <base>/saycut/update` | 后续修订（带 `expected_head_version_id` 冲突检测） | 同上 |
+
+`base` 默认 `https://mcp.zjtemplate.com`（与 `mcp_render_base_url` 同源）。
+
+**实测返回（首次保存，authorization 已 granted）**：
+
+```json
+{"error":{"code":"insufficient_scope","message":"Authorize cloud access with account login --cloud","retryable":false}}
+```
+
+含义：本地 license OAuth（`account login`）足够本地渲染；远端 `/saycut/*` 需要**额外的 cloud OAuth**（`account login --cloud`），与 GenVideo 旧别名同款。SKILL §0 与 README 状态矩阵已写明此分支。
+
+**实施要点**（新增 `saycut_tools/remote_edit.py`）：
+
+- bearer 优先级：`mcp_render_token` > `AccountClient.read()["access_token"]`，无 token 时清晰返回 `remote_edit_unconfigured`，**不静默降级到本地 store**（避免"跨设备库其实是单机"的误导）。
+- `expected_head_version_id` 用本地 `head_revision`；远端若返回 409 conflict，工具抛 `revision_conflict`，与 `editor_save_handoff` 同语义。
+- 网络/HTTP 错误转 `remote_edit_unavailable` + `retryable=true`，与 mcp_render 统一 error code 形状。
