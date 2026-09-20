@@ -122,3 +122,26 @@ unzip -p bundle.saycut.zip project.json | jq -r '.timelines[0]' > roundtrip.sky
 - bearer 优先级：`mcp_render_token` > `AccountClient.read()["access_token"]`，无 token 时清晰返回 `remote_edit_unconfigured`，**不静默降级到本地 store**（避免"跨设备库其实是单机"的误导）。
 - `expected_head_version_id` 用本地 `head_revision`；远端若返回 409 conflict，工具抛 `revision_conflict`，与 `editor_save_handoff` 同语义。
 - 网络/HTTP 错误转 `remote_edit_unavailable` + `retryable=true`，与 mcp_render 统一 error code 形状。
+
+## 7. cloud OAuth 实测失败（2026-09-20）
+
+`account --cloud` 在新装的 venv 中无法获得 connected 状态。SDK 默认走 OAuth Device Authorization Grant（`grant_type=urn:ietf:params:oauth:grant-type:device_code`）调 `/mcp/v1/token`，但 `https://mcp.zjtemplate.com/.well-known/oauth-authorization-server` 的 `grant_types_supported` 仅声明 `authorization_code` 与 `refresh_token`——**platform 不识别 device_code grant type**，每次轮询返 `400 invalid_client`，SDK 文件永远停在 `pending`、每次发新设备码都重新踩坑。
+
+**已知已工作的 OAuth 通道**：`account.json` 中的 `mcp_at_*` token 与 `mcp_rt_*` refresh token 是**authorization_code 流程产物**（refresh token flow）——SDK 仓库内当前没有这条流的实现代码（仅本机缓存）。
+
+**SDK 修复方向**（建议后续轮次处理）：
+
+1. SDK 实现 `/register` 动态客户端注册（discovery 上有 `registration_endpoint`），让 SDK 客户端在 platform 上注册后再走 authorization_code；
+2. 或 SDK 增加本地 HTTP callback server（类似 OAuth 标准 `redirect_uri` + `http://127.0.0.1:<random_port>`），让 platform 浏览器跳转后回传 token；
+3. 或在 platform 端开放 device_code grant type（如果业务上想支持 CLI/agent）。
+
+**当前用户可见影响**：
+
+- 本地 OAuth：✅ 正常工作（已有的 `account.json` token 续期、license keeper、本地渲染均通过）
+- 云端 OAuth：`account --cloud` 永远停在 `pending`，**`save_to_edit` 因此无法完成真实远端入库**——但 SDK 代码路径已就位（`remote_edit.py` + service 已实测握手返回 `insufficient_scope`），等 SDK device_code 修复或改用 authorization_code 后即开
+- 本地工程库 + 编辑器回流：✅ 全部本地可用
+
+**如何临时绕过**：
+
+- 任何已与 platform 走通 authorization_code 的本地凭据（`account.json` 存在者）已经够本机使用；
+- 跨设备云端库 `save_to_edit` 在 device_code 修复前为 stub——文档与 SKILL 已明确说明，**不应对客户承诺**。
