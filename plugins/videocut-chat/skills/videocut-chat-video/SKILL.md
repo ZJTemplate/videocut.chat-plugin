@@ -73,10 +73,13 @@ The editor exports a standard project bundle (`.saycut.zip`; zip contract `saycu
 
 When the user hands you an exported bundle path:
 
-1. `unzip -p <bundle> project.json` and take `.timelines[0]` — write it to a plain `.sky` file (e.g. `<name>.sky`) with a sanitized name.
-2. Feed that `.sky` to `saycut_render_video` (local engine) or `saycut_create_project`/`saycut_update_project` for targeted revisions, then re-render with a fresh idempotency key.
-3. Media files referenced by the timeline must be reachable: same machine → import via `saycut_import_asset` from the unpacked `resource/` directory; cloud backend → upload only with explicit user consent.
-4. Report what changed by diffing the new timeline against the previous project you hold — never assume the browser edit matches the last agent-side revision.
+1. `unzip -p <bundle> project.json` and read `.timelines[0]` (it is the full SkyMedia timeline JSON). Keep `resource/<rel>` media on the same machine — they are reachable via the SDK's `--allow-root` paths.
+2. The SDK MCP tool surface accepts **structured** projects only: `saycut_create_project` takes a `ProjectSpec` (name, width, height, fps, duration, `clips[]`, `captions[]`, `style_id`, `effect_params`); there is no `sky_file` parameter on the public tools. Translate the timeline JSON into a `ProjectSpec` yourself (clips → `clips[]` with `media` paths under the allowed roots, captions → `captions[]`), then submit a fresh `idempotency_key` and poll.
+3. For a one-clip "play this file" loop, the simpler path is `saycut_render_video` again — `render_video` does not read a timeline, only the four inputs (`path` / `url` / `asset_id` / `file`) plus optional `captions`. Use it when the timeline only contains a single clip with optional captions; reach for `create_project` + `render_project` only when the timeline has multiple clips or complex layered effects.
+4. Media files referenced by the timeline must be reachable: same machine → pass absolute paths (already inside an `--allow-root`); cloud backend → upload only with explicit user consent.
+5. Report what changed by comparing the new spec against the previous project you hold — never assume the browser edit matches the last agent-side revision.
+
+**Known gap (acknowledged, not silently worked around):** the SDK does not yet expose a tool that takes a raw `.sky` or a `saycut.project.bundle` zip directly. The editor accepts both, the SDK consumes neither as a single tool call. Until that arrives, every reflow runs through `create_project`/`update_project` with a manually-constructed `ProjectSpec`.
 
 In webview hosts (embedded chat ⇄ editor iframe) the dual-channel postMessage bridge (`host_bridge.js`) forwards `editor:dirty` → `saycut_edit_project` and `chat:apply_project` in-process; that bridge only exists when the editor runs as an iframe inside the host app. CLI hosts (Codex, Claude Code) have no iframe — use the exported-file recipe above and let the user pass the path; do not claim real-time sync for CLI hosts.
 

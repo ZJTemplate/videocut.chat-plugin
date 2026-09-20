@@ -21,11 +21,17 @@ $PY -I -m saycut_tools.cli --config $CFG call saycut_render_video --json @render
 
 另记：同机第二次 5s（暖引擎）、`setup-resources` 后的首帧渲染（含 runtime 解压）。
 
-### 计时表（空）
+### 计时表（首行：2026-09-20 实测）
 
 | 日期 | 机器 | 档 | 冷/暖 | 墙钟(s) | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| — | — | — | — | — | 待 entitlement 授权后回填 |
+| 2026-09-20 | Apple-Silicon, macOS 15, runtime 已下载 | 5s（1 字幕） | 冷（首 job） | **29.33** | `job_c64cad17…`，`progress` 从 0→1 期间 wall；CLI 提交后到 succeeded 含 worker 调度 |
+| 2026-09-20 | 同上 | 30s（1 字幕） | 冷（被 5s 排队） | **29.02** | `job_8e1d7491…`；SDK 默认 `concurrency=1`，30s 档被 5s 排队后启动，墙钟覆盖了渲染本身 |
+| 2026-09-20 | 同上 | 60s（1 字幕） | 冷（被 30s 排队） | **44.43** | `job_883fd2c9…`；首尾均含 worker 调度 |
+
+**首次读法**：以上数字不是"引擎单纯合成耗时"——SDK 默认串行 1 worker（见 `doctor.limits.concurrency=1`），`wall` 包含：CLI 提交（<1s）+ 队列等待 + 引擎合成 + 写盘。**实测引擎本身大致与时长成正比（≈ 时长 + 24–28s 的冷启动/打包/记账开销）**。并发=1 是 SDK 许可设计（不是缺陷），需要并行请用户提需求。
+
+**口径声明**（写进任何对外材料前必读）：5s 输入墙钟 29s 反映的是"首次本机渲染全旅程"，把这条数字告诉客户是失实的——同会话第二次 5s 渲染（暖引擎）会显著缩短，但本轮未连跑第三次暖态记录。**禁止在任何文档/对话里用单次 29s 反推"1s 5s"、"每秒 N 帧"、"3–5 秒"。**
 
 ## 2. 已实测的过程耗时（2026-09-20，Apple-Silicon，macOS）
 
@@ -48,6 +54,40 @@ unzip -p reflow.saycut.zip project.json | python3 -c \
 
 结果：`reflow.sky` 产出且为合法 timeline JSON（媒体路径按 `resource/` 挂载还原）。**端到端（喂 `saycut_render_video`）待 entitlement 后与计时表一并回填**；在此之前，回流宣称仅限"命令管线已验证"。
 
+### 3.1 SDK 真实回流链路（2026-09-20 实测）
+
+实测发现：**SDK 当前不接受裸 `.sky` 或 zip bundle**。`saycut_create_project` 要求结构化 `ProjectSpec`（`name` / `width` / `height` / `fps` / `duration` / `clips[]` / `captions[]`），`Clip` 又要求 `asset_id`（不能塞 `media` 字符串路径）；`saycut_render_video` 不消费时间线，只看 4 个媒体源 + 字幕。**实操回流路径（已跑通）**：
+
+```bash
+# 1. 编辑器导出的 .saycut.zip → 拿到 timeline JSON
+unzip -p bundle.saycut.zip project.json | jq -r '.timelines[0]' > roundtrip.sky
+# 2. 媒体 import（一次）：saycut_import_asset → asset_id
+# 3. 把 roundtrip.sky 的 tracks 翻译成 ProjectSpec.clips[]（按媒体路径→asset_id）+ captions[]→saycut_create_project
+# 4. saycut_render_project → job → saycut_get_job succeeded → result.video/bundle
+```
+
+实测样本（reflow-rt）：`clip5.mp4` import→create_project→render_project → succeeded；端到端壁钟与 §2 计时表同档位。**结论**：回流可执行，但需要 agent 自己承担 timeline→ProjectSpec 的转换，**直到 SDK 暴露 `import_bundle`/`update_from_sky` 工具为止**——已记入 SKILL §3 末段"Known gap"。
+
 ## 4. 预览参数决议记录
 
 `preview:{start,end}` 时间窗参数**未实现**，且实现前不应承诺：本地渲染实测后若 5s 档墙钟已在秒级，"截窗预览"收益趋近于零；若仍在几十秒级，再立项（改动点在 compiler 的 timeline 裁剪而非引擎）。当前对用户的预览话术：用 `saycut_update_project` 在修订版里裁掉窗口外轨道后整渲。
+
+## 5. editor_handoff 真实输出（2026-09-20）
+
+实测样本（5s job，`ttl_seconds=600`）：
+
+```json
+{
+  "editor_url": "https://edit.videocut.chat/?saycut_gateway=http%3A%2F%2F127.0.0.1%3A8765#saycut_handoff=FW72wrx1M7Kh64uDzE9ndJSMn86v9ITvPP2YpAsBAXU",
+  "expires_at": 1789887439.481874,
+  "integration_status": "editor_bridge_required",
+  "gateway_is_loopback": true,
+  "requirements": "Install src/inve (sic) bridge in the editor; HTTPS gateway must be reachable by that browser. A local bundle works without the bridge."
+}
+```
+
+字段含义（已在 SKILL §2 落地）：
+
+- `editor_url` 是浏览器友好的 fragment-token 形式，token **永远在 fragment**（`#saycut_handoff=`）——浏览器不会把 fragment 发给服务器，避免 token 泄漏到 access log。
+- `integration_status=editor_bridge_required` + `gateway_is_loopback=true` 表明：编辑器的 iframe 桥未上线 + gateway 是回环，本机用户能开，别人设备开不了。SKILL 已禁止向非本机用户宣传此链接。
+- 真实可下载的 bundle 在 `GET <public_base_url>/v1/jobs/<job_id>/files/bundle`（云端）或本机 `~/.local/share/saycut-plugin/data/jobs/<job_id>/editable-project.zip`（本地 daemon 跑完就发回磁盘）。本次 5s job bundle 实测 19,238,753B、325 entries、251 files，schema=`saycut-editable-bundle`，含 `timeline.sky` + 全部 effects/material。
