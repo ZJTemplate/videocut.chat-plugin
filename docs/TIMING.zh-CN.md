@@ -145,3 +145,22 @@ unzip -p bundle.saycut.zip project.json | jq -r '.timelines[0]' > roundtrip.sky
 
 - 任何已与 platform 走通 authorization_code 的本地凭据（`account.json` 存在者）已经够本机使用；
 - 跨设备云端库 `save_to_edit` 在 device_code 修复前为 stub——文档与 SKILL 已明确说明，**不应对客户承诺**。
+
+## 8. device_code route 修复 & 部署失败（2026-09-20）
+
+实测发现 platform OAuth server 真支持 device_code grant（`videocut_account/service.py:265 exchange_token` 完整实现），但**路由从未挂到 OAuthProvider**——SDK 设备码轮询总是拿到 `400 unsupported_grant_type`。
+
+**修复**（已 push 到 `ZJTemplate/videocut.chat-server@cb0bbf3`）：
+
+`videocut_account/oauth.py:install_oauth` 在标准 routes 之后**追加一条 `POST /mcp/v1/token` Route**，把请求交给 `service.exchange_token`（device_code 实现已在），保持 OAuthGuard + cors_middleware 一致封装。这样 SDK `client_id=videocut-cloud` + device_code grant 的轮询能拿到真 access_token，SDK account.json 里 cloud scope token 落地后 `save_to_edit` 远程 `/saycut/create` 就能完成真实入库。
+
+**部署状态**：CI run `35510270840` 报 `deployment_error: NoSuchBucket`，OSS bucket 名 `cloud.oss_bucket` 在 platform 私有 config 里查不到当前 bucket——**这是 platform 维护侧问题，不是 SDK 修复的回归**。
+
+**对客户的影响（部署未完成时）**：与第 7 节相同，跨设备云端库在 deployment_bucket 修复并完成 `cmake -C ci-build` 推送前为 stub；本地一切功能完整。
+
+**修复路径**（给 platform owner）：
+
+1. 登录 FC 控制台，定位 `videocut-chat-server` 函数当前挂载的 OSS bucket 名
+2. 更新 `server.private.json` 中 `cloud.oss_bucket` 字段为当前可用 bucket
+3. 推送 `ci-build` commit 触发自动部署
+4. 部署后验证：`curl -X POST https://mcp.zjtemplate.com/mcp/v1/token -d "client_id=videocut-cloud&grant_type=urn:ietf:params:oauth:grant-type:device_code&device_code=test"` 应返 `invalid_grant`（不再是 `unsupported_grant_type`）
