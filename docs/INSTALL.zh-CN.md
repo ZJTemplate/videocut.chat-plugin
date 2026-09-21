@@ -96,7 +96,7 @@ agent 驱动安装（README 五步工作流的第 0 步）与人工执行完全�
 
 ## 7. 微调回流与云端渲染协议
 
-- 云端提交统一走 `mcp.zjtemplate.com`，widget 名 = `tid` = `McpRender`；不再使用 `api.dalipen.com` / `GenVideo`（老 worker 以 `saycut_tools_v1` 别名过渡兼容）。
+- 云端提交统一走 `mcp.zjtemplate.com`，widget 名 = `tid` = `McpRender`；渲染任务由平台端自托管队列派发，worker 通过 `POST /mcp/v1/tasks/claim` 拉单执行，无第三方托管通道。
 - **注入编辑器**：云端任务用 `saycut_editor_handoff` 返回的链接或 `GET <public_base_url>/v1/jobs/<job_id>/editable-bundle` 拼 `edit.videocut.chat/editor?file=…`。该 URL 必须公网可读且不带 bearer。**本地任务不要伪造公网链接**——把渲染产物 editable bundle 路径交给用户，在编辑器里手动导入即可；浏览器禁止公网页面访问 `127.0.0.1`。
 - **微调结果回流**：编辑器"导出工程包"（`saycut.project.bundle` v1 zip）交给 agent；`unzip -p <bundle> project.json` 取 `.timelines[0]` 写成 `.sky` 文件即可喂回 `saycut_render_video`/`saycut_update_project`，无需任何转换工具。
 - `saycut_save_to_edit`：把工程修订版镜像到 `mcp.zjtemplate.com` 编辑库，返回 `{project_id, revision, cloud_edit_project_id, created, bytes}`。云端受理端点尚未对公网开放时工具会显式报错，改走本地 bundle 路径。
