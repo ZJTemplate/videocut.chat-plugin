@@ -1,6 +1,6 @@
 {
   "name": "videocut-chat",
   "version": "0.3.1",
-  "description": "Compose editable videos locally with videocut.chat fancy captions.",
+  "description": "把剪辑、字幕、渲染和云端处理接入 MCP 与自动化流程。",
   "author": {"name": "videocut.chat"}
 }

@@ -1,50 +1,60 @@
 # videocut.chat
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+让剪辑能力进入 Codex、MCP 和自动化流程。
 
-Animated captions ("花字"), deterministic video composition and editable SkyMedia projects **for AI coding-agent hosts** — Codex, Claude Code, Qwen Code and any MCP client. Powered by the licensed `template_generator` native engine running on your machine.
+`videocut.chat` 是给 Codex、Claude、Cursor、Qwen Code、n8n 和自有服务使用的视频工具插件。它把字幕解析、项目编辑、花字样式、本地渲染、云端渲染和编辑器交接封装成 MCP/REST 可调用能力，让视频生产可以进入聊天、脚本和工作流。
 
-**Version 0.3.1 · Controlled beta · Built for agent power users.**
-If you do not already run an MCP-capable coding agent, use the web product at [videocut.chat](https://videocut.chat) instead. This repository is not a one-click application, not a PyPI package, and not a marketplace listing.
+当前版本：`0.3.1`
 
-## The Workflow
+## 适合谁
 
-1. **Install once** (~10 minutes, one copy-paste block below, or hand the repo URL to your agent and ask it to run the installer steps and merge the generated config).
-2. **Authorize once.** First render opens a browser approval at [platform.zjtemplate.com](https://platform.zjtemplate.com). From 0.3.x onward background keepers silently renew the account token and the SDK lease (~36h horizon) — no periodic re-login.
-3. **Ask in natural language**: "Add animated Chinese captions to this video and keep the project editable." The agent transcribes (local faster-whisper), picks styles from the installed catalog, builds the project and renders **locally**; your media does not leave the machine unless you explicitly allow cloud processing.
-4. **Iterate in chat** (style/text/timing edits via MCP tools) — or **hand off for visual polish**: the plugin gives you an `edit.videocut.chat` URL that imports the exact project into the browser editor (production-verified, including 32 MB multi-material bundles via OPFS).
-5. **Export round-trip.** The editor exports a `.saycut.zip` project bundle; hand the downloaded file back to your agent (same machine) to continue revising and re-rendering in chat.
+- 想在 Codex 或其他 MCP 宿主里用自然语言修改视频的人。
+- 想把字幕、花字、渲染任务接入 n8n 或内部系统的团队。
+- 已经有 videocut.chat / platform.zjtemplate.com 账户，需要本地或云端渲染能力的用户。
+- 需要保留可编辑工程，而不只是拿到一个最终 MP4 的视频生产流程。
 
-## What Is Actually Where (honest status matrix)
+如果你只想在线剪一个视频，可以直接使用 [videocut.chat](https://videocut.chat) 或 [edit.videocut.chat](https://edit.videocut.chat)。这个仓库面向插件、MCP 和自动化接入。
 
-| Capability | State |
+## 支持什么
+
+- 本地剪辑：读取本机素材，创建项目，修改字幕、样式和时间轴。
+- 本地渲染：在已授权的本机运行时里导出 MP4 和可编辑工程。
+- 云端渲染：上传素材后由云端处理，适合 n8n、服务端和无本地渲染环境的场景。
+- 字幕处理：解析 SRT、VTT、ASS，并把字幕放进项目。
+- 花字样式：查询可用样式，检查单条字幕样式，调整颜色、大小、透明度、位置等参数。
+- MCP 接入：支持 Codex、Claude Desktop、Claude Code、Cursor、Qwen Code 和其他 stdio MCP 客户端。
+- REST 接入：启动本地或远端 HTTP 服务，让脚本和业务系统调用同一套工具。
+- n8n 自动化：上传素材、提交渲染、轮询任务、下载成片。
+- 编辑器交接：渲染后保存到远端编辑流程，继续在网页编辑器里微调。
+
+底层命令仍叫 `saycut-tools`，工具名仍使用 `saycut_*` 前缀，这是为了兼容已有集成；对外产品名是 `videocut.chat`。
+
+## 下载
+
+当前 release 文件在 [releases/v0.3.1](releases/v0.3.1/)：
+
+| 文件 | 用途 |
 | --- | --- |
-| Isolated-install + local render with bundled resources (macOS) | ✅ Verified (0.2.5 acceptance; 0.3.1 full-serve e2e in CI) |
-| One-time authorization, automatic token/license renewal | ✅ Implemented 0.3.1 (`TokenKeeper` / `LicenseKeeper`) |
-| MCP tool surface: import / transcribe / style / compose / render / cancel / idempotent retry | ✅ Contract- and CI-verified; Claude/Qwen/other hosts' own OAuth UI untested |
-| Browser editor project import (`edit.videocut.chat/editor?file=…`) | ✅ Live and production-verified |
-| SDK route `GET /v1/jobs/{id}/editable-bundle` | ✅ Implemented in 0.3.1 — but served from **your** gateway; a public browser cannot reach a local machine, so handoff URLs only resolve for browser-reachable gateways |
-| Cloud project store round-trip (`saycut_save_to_edit`) | 🟡 SDK client + REST + MCP channels done; the `POST /mcp/v1/edit-projects` endpoint on `mcp.zjtemplate.com` is not yet served by the platform — cross-device handoff is blocked on it |
-| Chat ↔ embedded-editor dual channel (`postMessage`) | 🟡 Contract-tested (Node CI); meaningful only for webview-capable hosts — terminal agents (Codex/CC CLI) use the export-file round-trip instead |
-| Cloud rendering via `McpRender` on `mcp.zjtemplate.com` | 🟡 3 real tasks finished in 66/66/96 s using an operator acceptance credential; personal OAuth + billing acceptance is not complete; legacy worker still registers `GenVideo` (alias `saycut_tools_v1`) |
-| Windows / Linux native rendering | ⬜ Config exists, not acceptance-tested |
-| Preview-segment rendering (short time window) | ⬜ Not implemented — every render is a full job today |
+| [saycut_tools-0.3.1-py3-none-any.whl](releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl) | MCP 服务、本地 REST 网关、样式资源和命令行工具 |
+| [videocut-chat-plugin-0.3.1.zip](releases/v0.3.1/videocut-chat-plugin-0.3.1.zip) | 可分发的插件配置和 skill |
+| [SHA256SUMS](releases/v0.3.1/SHA256SUMS) | 文件校验和 |
 
-The catalog contains 224 entries; this wheel bundles resources for 211 styles plus a Source Han Sans fallback font, 13 entries require separately supplied resources. Availability is not a guarantee of visual quality for every language or caption length — long-caption wrapping, missing glyphs and decorative clipping are known limits. Normalize rotation metadata and non-square pixels with FFmpeg before import (the skill documents the procedure).
+下载后建议先校验：
 
-## Downloads (0.3.1)
+```bash
+python3 scripts/verify_release.py
+```
 
-| File | Purpose |
-| --- | --- |
-| [Python wheel](releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl) | `saycut-tools`: MCP server, local gateway, editor assets, style resources |
-| [Plugin ZIP](releases/v0.3.1/videocut-chat-plugin-0.3.1.zip) | Portable plugin manifests and the video skill |
-| [SHA256SUMS](releases/v0.3.1/SHA256SUMS) | Checksums for both archives |
+## 安装
 
-Verify after downloading: `python3 scripts/verify_release.py`. The wheel is inspectable Python; packaging is not encryption. The installer fetches the pinned native SDK (`p-template-generator==1.2.17`, `native` extra), optionally `faster-whisper` (`asr` extra), the runtime binaries and the ASR model as explicit downloads. Nothing bundles account credentials or SDK certificates.
+前提：
 
-## Install (macOS / POSIX)
+- Python 3.11 或更新版本。
+- FFmpeg 和 ffprobe 在 PATH 中。
+- 一个可用于授权的 platform.zjtemplate.com 账户。
+- 如果要本地渲染，还需要本机运行时、SDK、样式资源和对应权益。
 
-Prerequisites: Python ≥ 3.11, FFmpeg + ffprobe on PATH, a platform account with local-render entitlement, network access for downloads and license checks.
+安装到隔离目录：
 
 ```bash
 git clone https://github.com/ZJTemplate/videocut.chat-plugin.git
@@ -53,40 +63,127 @@ python3 scripts/verify_release.py
 
 python3 scripts/install_isolated.py \
   --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
-  --allow-root "/absolute/path/to/videos" \
-  --download-resources --asr --download-model
+  --allow-root "/绝对路径/视频目录" \
+  --download-resources \
+  --asr \
+  --download-model
 ```
 
-This creates a private environment under `~/.local/share/saycut-plugin` (nothing touches global site-packages), then prints three paths: `python`, `config`, `integrations`. Check readiness:
+安装脚本会在 `~/.local/share/saycut-plugin` 创建私有 Python 环境，不会修改全局 site-packages。完成后会打印三个路径：
+
+- `python`：私有 Python 解释器。
+- `config`：当前机器的 `saycut.json`。
+- `integrations`：为 Codex、Claude、Cursor、Qwen 等宿主生成的配置文件。
+
+检查环境：
 
 ```bash
 "<python>" -I -m saycut_tools.cli --config "<config>" doctor --check
+"<python>" -I -m saycut_tools.cli --config "<config>" call saycut_capabilities --json '{}'
 ```
 
-`setup-resources` and `configure-asr --backend faster_whisper --model small --download-model` can re-run the same downloads later. Diagnostics check prerequisites, not every effect or a license-authorized render.
+如果机器上还没有本地渲染资源，能力检查仍然应该返回，并说明缺少哪些前置条件。这表示工具安装成功，但还不能本地导出视频。
 
-## Connect Your Assistant
+## 授权
 
-Use the **generated** files under the returned `integrations` directory — not the generic manifests in this repo unchanged:
+本地渲染需要本机运行时、SDK、样式资源、FFmpeg 和账户授权都可用：
 
-| Host | Generated configuration |
+```bash
+"<python>" -I -m saycut_tools.cli --config "<config>" account login
+"<python>" -I -m saycut_tools.cli --config "<config>" account status
+```
+
+云端渲染使用云端账户或网关 token。本地 SDK 授权不等于云端消费授权。纯 stdio 宿主可以先跑：
+
+```bash
+"<python>" -I -m saycut_tools.cli --config "<config>" account login --cloud
+```
+
+任何上传素材或云端渲染都必须显式同意：
+
+```json
+{
+  "allow_cloud_processing": true
+}
+```
+
+## 接入 MCP 宿主
+
+使用安装脚本生成的配置文件，不要直接复制别人的绝对路径：
+
+| 宿主 | 生成文件 |
 | --- | --- |
-| Codex | `codex.toml`, or register `plugins/videocut-chat/` as a local plugin source |
-| Claude Code | `claude-code.mcp.json` or the generated plugin directory |
+| Codex | `codex.toml`，或注册 `plugins/videocut-chat/` 为本地插件源 |
 | Claude Desktop | `claude-desktop.json` |
+| Claude Code | `claude-code.mcp.json` |
+| Cursor | `cursor.mcp.json` |
 | Qwen Code | `qwen.settings.json` |
-| Other MCP hosts | Compatible generated stdio configuration |
+| 其他 MCP 客户端 | 使用生成的 stdio MCP 配置 |
 
-Merge with your host's MCP configuration mechanism without overwriting unrelated settings, start a new conversation, and confirm `saycut_capabilities` is listed. On first render the plugin opens the authorization link — sign in and approve it yourself; credentials and the short-lived SDK certificate stay in the private runtime directory.
+手写 stdio MCP 配置时，结构如下：
 
-## Cloud, Editor Bridge, Limits
+```json
+{
+  "mcpServers": {
+    "videocut-chat": {
+      "command": "/absolute/path/to/python",
+      "args": [
+        "-m",
+        "saycut_tools.cli",
+        "--config",
+        "/absolute/path/to/saycut.json",
+        "mcp"
+      ]
+    }
+  }
+}
+```
 
-Cloud submissions flow through `McpRender` on `https://mcp.zjtemplate.com/mcp` (0.2.3+ supports OAuth discovery, dynamic registration, PKCE, token rotation/revocation). A website login token or a local-only grant is not a cloud credential; stdio-only hosts run `account login --cloud` once. Cloud generation uses platform GenVideo rates: automatic ASR reserves against the duration ceiling (currently 600 s × CNY 0.01/s), settles reported usage on completion and refunds the remainder — the legacy worker currently reports `usage={}`, so final production metering awaits that worker's usage upgrade. One preset and MP4 output are verified in the legacy cloud path; the full effect catalog and editable cloud projects are not available yet.
+新开一个对话后，先确认 `saycut_capabilities` 可见，再开始渲染任务。
 
-The editor bridge is **split across two halves**: the browser side (project import into `edit.videocut.chat`, OPFS-backed, export toast flow, byte-verified round-trips) is live and production-verified; the platform side (public edit-project store behind `POST /mcp/v1/edit-projects`) is not yet accepting requests, so `saycut_save_to_edit` only completes against a stub. Until then, a `?file=` URL pointing at a non-public gateway will not load in the browser — do not treat a handoff link as proof of a working session, and prefer the same-machine export round-trip.
+## REST 和 n8n
 
-Local rendering never silently uploads media; license/account checks still contact the authorization service (local-first ≠ fully offline). Explicit consent is required for any cloud processing (`allow_cloud_processing`). Do not commit tokens, certificates, private configs or customer media to repositories.
+启动本地 REST 服务：
 
-## Support
+```bash
+"<python>" -I -m saycut_tools.cli --config "<config>" serve --host 127.0.0.1 --port 8765
+TOKEN=$(cat "$(jq -r .data_dir "<config>")/api-token")
+curl -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  http://127.0.0.1:8765/v1/tools/saycut_capabilities \
+  -d '{}'
+```
 
-Report reproducible issues through [GitHub Issues](https://github.com/ZJTemplate/videocut.chat-plugin/issues) with OS, Python/package versions and sanitized diagnostics. Never attach credentials or private videos; if credentials leaked, revoke the connection on the platform before filing. Acceptance records: [0.2.5](docs/ACCEPTANCE-0.2.5.zh-CN.md), [0.2.3](docs/ACCEPTANCE-0.2.3.zh-CN.md), [2026-09-14](docs/ACCEPTANCE-2026-09-14.zh-CN.md) · Install guide (zh-CN): [docs/INSTALL.zh-CN.md](docs/INSTALL.zh-CN.md)
+n8n 建议按这个流程接：
+
+1. 上传素材到 `/v1/assets/upload`，拿到 `asset_id`。
+2. 调用 `saycut_render_video` 或 `saycut_render_project`。
+3. 用 `saycut_get_job` 轮询状态。
+4. 任务成功后用返回的下载地址取回结果。
+
+HTTP 或远端工作流不能直接传本机文件路径，必须先上传素材。
+
+## 常用工具
+
+- `saycut_capabilities`：查看环境、限制和缺失项。
+- `saycut_list_styles` / `saycut_get_style`：查询样式。
+- `saycut_parse_subtitles`：解析字幕。
+- `saycut_create_project` / `saycut_edit_project` / `saycut_update_project` / `saycut_get_project`：创建和修改项目。
+- `saycut_inspect_caption_style` / `saycut_style_captions`：查看和调整字幕样式。
+- `saycut_render_video` / `saycut_render_project`：提交渲染任务。
+- `saycut_get_job` / `saycut_cancel_job` / `saycut_job_events`：查询、取消和订阅任务。
+- `saycut_prepare_upload` / `saycut_complete_upload`：云端上传流程。
+- `saycut_editor_handoff` / `saycut_save_to_edit`：保存到远端编辑流程。
+
+## 边界
+
+- 本地渲染不会静默上传素材。
+- 云端处理必须由用户明确同意。
+- 不要把 token、证书、私有配置或客户素材提交到仓库。
+- 不要把网关 Bearer token 附加到 OSS 签名下载地址。
+- 不要编造字幕时间轴或字级对齐。
+- 只有 `saycut_editor_handoff` 返回 `integration_status: ready` 时，才说明可以打开远端编辑器继续微调。
+
+## 支持
+
+可复现问题请提交 [GitHub Issues](https://github.com/ZJTemplate/videocut.chat-plugin/issues)，附 OS、Python 版本、插件版本和脱敏诊断。不要上传凭证或私有视频；如果凭证已经泄露，先在平台撤销后再反馈问题。
