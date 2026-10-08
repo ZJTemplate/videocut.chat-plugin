@@ -50,7 +50,7 @@ python3 scripts/install_isolated.py \
 
 ## 授权
 
-本地渲染需要本机运行时、SDK、样式资源、FFmpeg 和账户授权都可用：
+本地渲染需要本机运行时、SDK、样式资源、媒体工具和账户授权都可用。媒体工具可由 `setup-resources` 自动准备：
 
 ```bash
 "<python>" -I -m saycut_tools.cli --config "<config>" account login

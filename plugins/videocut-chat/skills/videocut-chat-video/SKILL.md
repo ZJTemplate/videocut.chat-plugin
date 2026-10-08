@@ -11,7 +11,7 @@ Use videocut.chat for deterministic composition, real speech transcription and e
 
 If no `saycut_*` tool responds in this session, do not tell the user to "install manually". Run the agent-driven install first (the user approves the commands once):
 
-1. Confirm prerequisites: Python 3.11+ (`python3 --version`), FFmpeg and ffprobe on PATH, and a media directory the user is willing to expose to the local gateway.
+1. Confirm prerequisites: Python 3.11+ (`python3 --version`) and a media directory the user is willing to expose to the local gateway. Do not require a system FFmpeg install up front; `setup-resources` provisions the release-pinned media tools into the private runtime when local probing, ASR, or rendering needs them.
 2. Clone (or reuse) the plugin repo and install into the private, pinned environment — never global Python:
 
    ```bash
@@ -37,7 +37,7 @@ For a user-selected video, prefer `saycut_render_video`, or `saycut_render_attac
 
 Local media stays local by default. Do not switch a failed local render to the cloud automatically. Obtain explicit user consent before setting `allow_cloud_processing=true`. A remote gateway cannot read a local path: use its prepare_upload grant, upload bytes directly to OSS, then complete_upload. A chat attachment must have an actual host-authorized download URL; file IDs alone are not URLs. Do not assume all chat clients accept MP4 attachments.
 
-`readiness` describes local prerequisites, not a successful render or a validated license. For missing native runtime/effects, offer the private interpreter's `setup-resources` command; it downloads pinned runtime files and installs bundled effects/fonts without uploading media. FFmpeg/ffprobe must be installed. `--asr` configures a previously disabled ASR backend, including upgrades, but model download still requires explicit `--download-model` or `configure-asr --backend faster_whisper --model small --download-model`. Do not install into global Python. On `dispatch_uncertain`, stop and have the operator check the upstream task before using a new submission key.
+`readiness` describes local prerequisites, not a successful render or a validated license. For missing native runtime/effects/media tools, offer the private interpreter's `setup-resources` command; it downloads pinned runtime files, FFmpeg/ffprobe and bundled effects/fonts without uploading media. A separate system FFmpeg install is only a fallback, not a bootstrap prerequisite. `--asr` configures a previously disabled ASR backend, including upgrades, but model download still requires explicit `--download-model` or `configure-asr --backend faster_whisper --model small --download-model`. Do not install into global Python. On `dispatch_uncertain`, stop and have the operator check the upstream task before using a new submission key.
 
 Cloud access requires separate OAuth consent or `account login --cloud`; an existing local SDK token does not authorize spending. Inspect the cloud `billing` policy in capabilities before paid processing. Automatic ASR reserves balance for the configured maximum duration, then settles reported worker usage and refunds the remainder; failed/cancelled jobs refund the reservation. Report both reserved and final charged amounts, not the reservation as final cost. On `insufficient_scope`, request cloud authorization; never substitute an administrator token or revoke the working local connection.
 

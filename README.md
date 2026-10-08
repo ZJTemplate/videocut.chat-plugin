@@ -50,7 +50,7 @@ python3 scripts/verify_release.py
 前提：
 
 - Python 3.11 或更新版本。
-- FFmpeg 和 ffprobe 在 PATH 中。
+- 本地媒体探测、ASR 或渲染需要 FFmpeg/ffprobe；安装脚本的 `--download-resources` 会把发布包钉定的版本放进私有运行目录，通常不需要用户单独安装系统 FFmpeg。
 - 一个可用于授权的 platform.zjtemplate.com 账户。
 - 如果要本地渲染，还需要本机运行时、SDK、样式资源和对应权益。
 
@@ -86,7 +86,7 @@ python3 scripts/install_isolated.py \
 
 ## 授权
 
-本地渲染需要本机运行时、SDK、样式资源、FFmpeg 和账户授权都可用：
+本地渲染需要本机运行时、SDK、样式资源、媒体工具和账户授权都可用。媒体工具可由 `setup-resources` 自动准备：
 
 ```bash
 "<python>" -I -m saycut_tools.cli --config "<config>" account login

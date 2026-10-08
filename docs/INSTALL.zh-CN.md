@@ -14,7 +14,7 @@ python3 scripts/install_isolated.py \
   --allow-root ~/Movies --download-resources
 ```
 
-- 前置条件：Python ≥ 3.11、`ffmpeg`/`ffprobe` 在 PATH。
+- 前置条件：Python ≥ 3.11。`setup-resources` 会把发布包钉定的 `ffmpeg`/`ffprobe` 放进私有运行目录；只有禁用资源下载或私有包不可用时，才需要用户自己把 FFmpeg 放到 PATH。
 - `--allow-root` 是**媒体授权根目录**（可多次传入，必须已存在），不是安装位置；安装固定落在 `~/.local/share/saycut-plugin`，全程不碰全局 Python。
 - `--download-resources` 下载钉死版本的 native runtime、特效与字体（不上传任何素材）；离线或内网机器可省略，之后随时补跑 `setup-resources`。
 - 需要离线语音转写再加 `--asr --download-model`（会额外拉 Whisper small 模型，体积较大，建议先问用户）。
