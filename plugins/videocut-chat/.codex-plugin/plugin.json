@@ -1,6 +1,6 @@
 {
   "name": "videocut-chat",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "把剪辑、字幕、渲染和云端处理接入 Codex、MCP、REST 与 n8n。",
   "author": {
     "name": "videocut.chat"
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "videocut.chat",
     "shortDescription": "在 Codex 里调用剪辑、字幕、花字和渲染工具。",
-    "longDescription": "videocut.chat 0.3.1 支持样式查询、字幕解析、项目编辑、花字调整、本地授权渲染、用户同意后的云端渲染，以及远端编辑器交接。适合本地创作、Agent 调用和 n8n 自动化工作流。",
+    "longDescription": "videocut.chat 0.3.2 支持样式查询、字幕解析、项目编辑、花字调整、本地授权渲染、用户同意后的云端渲染，以及远端编辑器交接。适合本地创作、Agent 调用和 n8n 自动化工作流。",
     "developerName": "videocut.chat",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],

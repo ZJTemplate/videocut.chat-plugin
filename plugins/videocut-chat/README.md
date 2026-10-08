@@ -4,7 +4,7 @@
 
 这个插件把 `videocut.chat` 的字幕解析、项目编辑、花字样式、本地渲染、云端渲染和编辑器交接能力暴露给 Codex、Claude、Cursor、Qwen Code、n8n 和其他 MCP/REST 客户端。
 
-当前版本：`0.3.1`
+当前版本：`0.3.2`
 
 ## 支持什么
 
@@ -26,7 +26,7 @@
 ```bash
 python3 scripts/verify_release.py
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
+  --wheel releases/v0.3.2/saycut_tools-0.3.2-py3-none-any.whl \
   --allow-root "/绝对路径/视频目录" \
   --download-resources \
   --asr \

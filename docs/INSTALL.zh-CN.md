@@ -10,7 +10,7 @@ SDK **没有发布到 PyPI**，不要执行 `pip install saycut-tools`（含 `--
 git clone --depth 1 https://github.com/ZJTemplate/videocut.chat-plugin.git ~/videocut.chat-plugin
 cd ~/videocut.chat-plugin
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
+  --wheel releases/v0.3.2/saycut_tools-0.3.2-py3-none-any.whl \
   --allow-root ~/Movies --download-resources
 ```
 

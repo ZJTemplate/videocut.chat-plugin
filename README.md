@@ -4,7 +4,7 @@
 
 `videocut.chat` 是给 Codex、Claude、Cursor、Qwen Code、n8n 和自有服务使用的视频工具插件。它把字幕解析、项目编辑、花字样式、本地渲染、云端渲染和编辑器交接封装成 MCP/REST 可调用能力，让视频生产可以进入聊天、脚本和工作流。
 
-当前版本：`0.3.1`
+当前版本：`0.3.2`
 
 ## 适合谁
 
@@ -31,13 +31,13 @@
 
 ## 下载
 
-当前 release 文件在 [releases/v0.3.1](releases/v0.3.1/)：
+当前 release 文件在 [releases/v0.3.2](releases/v0.3.2/)：
 
 | 文件 | 用途 |
 | --- | --- |
-| [saycut_tools-0.3.1-py3-none-any.whl](releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl) | MCP 服务、本地 REST 网关、样式资源和命令行工具 |
-| [videocut-chat-plugin-0.3.1.zip](releases/v0.3.1/videocut-chat-plugin-0.3.1.zip) | 可分发的插件配置和 skill |
-| [SHA256SUMS](releases/v0.3.1/SHA256SUMS) | 文件校验和 |
+| [saycut_tools-0.3.2-py3-none-any.whl](releases/v0.3.2/saycut_tools-0.3.2-py3-none-any.whl) | MCP 服务、本地 REST 网关、样式资源和命令行工具 |
+| [videocut-chat-plugin-0.3.2.zip](releases/v0.3.2/videocut-chat-plugin-0.3.2.zip) | 可分发的插件配置和 skill |
+| [SHA256SUMS](releases/v0.3.2/SHA256SUMS) | 文件校验和 |
 
 下载后建议先校验：
 
@@ -62,7 +62,7 @@ cd videocut.chat-plugin
 python3 scripts/verify_release.py
 
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
+  --wheel releases/v0.3.2/saycut_tools-0.3.2-py3-none-any.whl \
   --allow-root "/绝对路径/视频目录" \
   --download-resources \
   --asr \

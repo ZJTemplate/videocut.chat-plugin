@@ -1,6 +1,6 @@
 # videocut.chat 快速开始
 
-当前版本：`0.3.1`。
+当前版本：`0.3.2`。
 
 ## 1. 安装
 
@@ -9,7 +9,7 @@
 ```bash
 python3 scripts/verify_release.py
 python3 scripts/install_isolated.py \
-  --wheel releases/v0.3.1/saycut_tools-0.3.1-py3-none-any.whl \
+  --wheel releases/v0.3.2/saycut_tools-0.3.2-py3-none-any.whl \
   --allow-root "/绝对路径/视频目录" \
   --download-resources \
   --asr \
