@@ -1,8 +1,14 @@
 {
   "name": "videocut-chat",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "mcpServers": {
-    "videocut-chat": {"command": "saycut-tools", "args": ["mcp"]}
+    "videocut-chat": {
+      "command": "saycut-tools",
+      "args": [
+        "mcp"
+      ]
+    }
   },
-  "skills": "skills"
+  "skills": "skills",
+  "description": "视频剪辑、字幕花字与本地或云端渲染，交付成片与可编辑工程。"
 }

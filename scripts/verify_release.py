@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import zipfile
+from email.parser import Parser
 from pathlib import Path
 
 
@@ -35,6 +36,28 @@ def main():
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
                 raise ValueError("Invalid archive: " + name)
+            if name.endswith(".whl"):
+                metadata_paths = [p for p in archive.namelist() if p.endswith(".dist-info/METADATA")]
+                if len(metadata_paths) != 1:
+                    raise ValueError("Invalid wheel metadata")
+                metadata = Parser().parsestr(archive.read(metadata_paths[0]).decode())
+                if metadata.get("Name") != "saycut-tools" or metadata.get("Version") != version:
+                    raise ValueError("Wheel version mismatch")
+            else:
+                prefix = "videocut-chat/"
+                for manifest in ("plugin.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json", "qwen-extension.json"):
+                    if json.loads(archive.read(prefix + manifest))["version"] != version:
+                        raise ValueError("Plugin version mismatch: " + manifest)
+                if version == current:
+                    source = repository / "plugins/videocut-chat"
+                    files = {prefix + p.relative_to(source).as_posix(): p for p in source.rglob("*")
+                             if p.is_file() and p.name != ".DS_Store" and "__pycache__" not in p.parts}
+                    packaged = {p for p in archive.namelist() if not p.endswith("/")}
+                    if packaged != files.keys():
+                        raise ValueError("Plugin archive file list differs from source")
+                    for member, source_path in files.items():
+                        if archive.read(member) != source_path.read_bytes():
+                            raise ValueError("Stale plugin archive member: " + member)
         print("Verified: " + name)
     if seen != expected:
         raise ValueError("Missing checksum entries")

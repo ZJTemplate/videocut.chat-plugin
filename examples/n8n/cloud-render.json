@@ -30,7 +30,7 @@
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { asset_id: $json.asset_id, ...( $json.captions ? { captions: $json.captions } : {} ), style_id: $json.style_id || 'runtime/ZapMotion', allow_cloud_processing: $json.allow_cloud_processing === true, idempotency_key: 'n8n-' + $execution.id + '-' + $json.asset_id } }}",
+        "jsonBody": "={{ { asset_id: $json.asset_id, ...( $json.captions ? { captions: $json.captions } : {} ), style_id: $json.style_id || 'style/style1', allow_cloud_processing: $json.allow_cloud_processing === true, idempotency_key: 'n8n-' + $execution.id + '-' + $json.asset_id } }}",
         "options": {
           "timeout": 30000
         }

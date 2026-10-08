@@ -1,6 +1,8 @@
 {
   "name": "videocut-chat",
-  "version": "0.3.2",
-  "description": "把剪辑、字幕、渲染和云端处理接入 MCP 与自动化流程。",
-  "author": {"name": "videocut.chat"}
+  "version": "0.3.3",
+  "description": "视频剪辑、字幕花字与本地或云端渲染，交付成片与可编辑工程。",
+  "author": {
+    "name": "videocut.chat"
+  }
 }

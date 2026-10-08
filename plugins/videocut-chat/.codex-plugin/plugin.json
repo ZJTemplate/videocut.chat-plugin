@@ -1,19 +1,24 @@
 {
   "name": "videocut-chat",
-  "version": "0.3.2",
-  "description": "把剪辑、字幕、渲染和云端处理接入 Codex、MCP、REST 与 n8n。",
+  "version": "0.3.3",
+  "description": "视频剪辑、字幕花字与本地或云端渲染，交付成片与可编辑工程。",
   "author": {
     "name": "videocut.chat"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "videocut.chat",
-    "shortDescription": "在 Codex 里调用剪辑、字幕、花字和渲染工具。",
-    "longDescription": "videocut.chat 0.3.2 支持样式查询、字幕解析、项目编辑、花字调整、本地授权渲染、用户同意后的云端渲染，以及远端编辑器交接。适合本地创作、Agent 调用和 n8n 自动化工作流。",
+    "shortDescription": "用自然语言剪辑，交付视频与可编辑工程。",
+    "longDescription": "videocut.chat 0.3.3：字幕与花字样式预览、素材编排、时间轴修改、本地或云端渲染，以及可编辑工程交接。支持 Codex、MCP、REST 与 n8n。",
     "developerName": "videocut.chat",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
-    "defaultPrompt": ["先调用 saycut_capabilities 检查环境，再查询样式、准备字幕或项目，最后按需提交本地或云端渲染。"]
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "先调用 saycut_capabilities 检查环境，再查询样式、准备字幕或项目，最后按需提交本地或云端渲染。"
+    ]
   },
   "mcpServers": "./.mcp.json"
 }
