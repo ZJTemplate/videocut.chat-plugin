@@ -14,7 +14,7 @@
 
 </div>
 
-在 Codex、Claude、Cursor 或 Qwen Code 中描述剪辑需求，由工具处理素材、字幕和渲染；也可以通过 MCP、REST 或 n8n 把同一套能力接入业务流程。输出 MP4，并在所选渲染后端支持时保留工程，继续修改字幕、样式和时间轴。
+在 Codex、Claude、Cursor、Qwen Code 或 WorkBuddy 中描述剪辑需求，由工具处理素材、字幕和渲染；也可以通过 MCP、REST 或 n8n 把同一套能力接入业务流程。输出 MP4，并在所选渲染后端支持时保留工程，继续修改字幕、样式和时间轴。
 
 ## 效果预览
 
@@ -82,6 +82,7 @@ python3 scripts/install_isolated.py \
 | 使用场景 | 入口 |
 | --- | --- |
 | Codex / Claude / Cursor / Qwen Code | [本地 MCP 与 skill 配置](docs/INTEGRATIONS.zh-CN.md#本地-mcp-与-skill) |
+| WorkBuddy | [自定义 MCP 接入](docs/INTEGRATIONS.zh-CN.md#workbuddy) |
 | 支持 HTTP MCP 的客户端 | [云端 MCP 与 OAuth](docs/INTEGRATIONS.zh-CN.md#云端-mcp) |
 | 脚本和业务服务 | [REST API](docs/INTEGRATIONS.zh-CN.md#rest-api) |
 | n8n 自动化 | [连接检查与云端渲染示例](examples/n8n/README.md) |

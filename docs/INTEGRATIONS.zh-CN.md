@@ -22,6 +22,43 @@ MCP 提供工具，skill 提供使用流程。支持插件的宿主可安装 `<i
 
 重新打开会话，确认 `saycut_capabilities` 可见。原始下载包里的通用 `saycut-tools` 命令依赖宿主 PATH，本地使用优先选择安装器生成的配置。
 
+## WorkBuddy
+
+在 WorkBuddy 的连接器管理中添加自定义 MCP。下面两种配置按需选择一种，合并时保留已有服务。
+
+**本地剪辑**：先完成[隔离安装](INSTALL.zh-CN.md)，将 `<python>` 和 `<config>` 替换为安装器输出的绝对路径，再添加配置：
+
+```json
+{
+  "mcpServers": {
+    "videocut-chat": {
+      "type": "stdio",
+      "command": "<python>",
+      "args": ["-I", "-m", "saycut_tools.cli", "--config", "<config>", "mcp"]
+    }
+  }
+}
+```
+
+**云端剪辑**：无需本地渲染环境，使用远端地址并按客户端提示完成 OAuth 授权：
+
+```json
+{
+  "mcpServers": {
+    "videocut-chat": {
+      "type": "streamableHttp",
+      "url": "https://mcp.zjtemplate.com/mcp"
+    }
+  }
+}
+```
+
+连接后先让 WorkBuddy 调用 `saycut_capabilities`，确认工具可见；授权和媒体上传要求见[安装与授权](INSTALL.zh-CN.md)及[云端 MCP](#云端-mcp)。不要把账户密钥写进共享配置。
+
+需要 skill 时，使用仓库中 `plugins/videocut-chat/skills/videocut-chat-video` 的完整内容，通过 WorkBuddy 的技能导入功能安装，保留 `SKILL.md`、`references` 和 `assets`。仅安装 skill 不会自动安装渲染运行时或配置 MCP。
+
+以上配置依据 [WorkBuddy 官方连接器文档](https://open.workbuddy.cn/docs/connector)；技能导入参见[官方技能说明](https://www.workbuddy.cn/docs/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/Skills-Market)。这是自定义接入方式，不代表已上架 WorkBuddy 市场；本项目尚未完成 WorkBuddy 客户端内的端到端验收。
+
 ## 云端 MCP
 
 在支持 Streamable HTTP 与 OAuth 的 MCP 客户端中添加：
